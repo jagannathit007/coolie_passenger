@@ -540,22 +540,22 @@ Widget _buildDrawer(TravelHomeController controller) {
                     Get.toNamed(RouteName.profileScreen);
                   },
                 ),
-                ListTile(
-                  leading: Icon(Icons.history, color: Constants.instance.primary),
-                  title: Text('Booking History', style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
-                  trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-                  onTap: () {
-                    Get.back();
-                  },
-                ),
-                ListTile(
-                  leading: Icon(Icons.support_agent_outlined, color: Constants.instance.primary),
-                  title: Text('Help & Support', style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
-                  trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-                  onTap: () {
-                    Get.back();
-                  },
-                ),
+                // ListTile(
+                //   leading: Icon(Icons.history, color: Constants.instance.primary),
+                //   title: Text('Booking History', style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
+                //   trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                //   onTap: () {
+                //     Get.back();
+                //   },
+                // ),
+                // ListTile(
+                //   leading: Icon(Icons.support_agent_outlined, color: Constants.instance.primary),
+                //   title: Text('Help & Support', style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
+                //   trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                //   onTap: () {
+                //     Get.back();
+                //   },
+                // ),
                 const Divider(height: 32),
                 ListTile(
                   leading: const Icon(Icons.logout, color: Colors.red),
