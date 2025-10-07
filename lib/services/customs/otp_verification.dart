@@ -15,9 +15,7 @@ typedef PinBoxDecoration = BoxDecoration Function(
     double radius,
     });
 
-/// class to provide some standard PinBoxDecoration such as standard box or underlined
 class ProvidedPinBoxDecoration {
-  /// Default BoxDecoration
   static PinBoxDecoration defaultPinBoxDecoration = (
       Color borderColor,
       Color pinBoxColor, {

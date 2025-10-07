@@ -1,0 +1,284 @@
+import 'dart:developer';
+
+import '/screen/home/travel_home_service.dart';
+import '/screen/user%20profile/profile_service.dart';
+import '/models/get_user_profile_model.dart';
+import '/models/booking_models.dart'; // Import the new models
+import '/services/app_storage.dart';
+import '/utils/app_constants.dart';
+import '/widgets/text_box_widegt.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
+import '../../services/app_toasting.dart';
+
+class TravelHomeController extends GetxController {
+  late Razorpay _razorpay;
+  final passengerId = ''.obs;
+  final isLoading = false.obs;
+  Rx<GetUserProfile> userProfile = GetUserProfile().obs;
+  late final TravelHomeService travelHomeService;
+  late final ProfileService profileService;
+  final stationController = TextEditingController();
+  final platformController = TextEditingController();
+  final coachNoController = TextEditingController();
+  final descriptionController = TextEditingController();
+  final destinationController = TextEditingController();
+  final selectedStation = Rxn<String>();
+  final stations = <dynamic>[].obs;
+  final currentBooking = Rxn<Booking>();
+  final bookingHistory = <Booking>[].obs;
+  final page = 1.obs;
+  final hasMore = true.obs;
+  final scrollController = ScrollController();
+
+  @override
+  void onInit() {
+    super.onInit();
+    _initializeTServices();
+    _initializePServices();
+    _razorpay = Razorpay();
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+    passengerId.value = AppStorage.read('passengerID');
+    log("Id== ${passengerId.value}");
+    getAPICalling();
+    fetchStations();
+    fetchCurrentBooking();
+    fetchBookingHistory();
+    scrollController.addListener(() {
+      if (scrollController.position.pixels == scrollController.position.maxScrollExtent && hasMore.value) {
+        fetchBookingHistory();
+      }
+    });
+  }
+
+  void _initializePServices() {
+    try {
+      profileService = Get.find<ProfileService>();
+    } catch (e) {
+      profileService = Get.put(ProfileService());
+    }
+  }
+
+  void _initializeTServices() {
+    try {
+      travelHomeService = Get.find<TravelHomeService>();
+    } catch (e) {
+      travelHomeService = Get.put(TravelHomeService());
+    }
+  }
+
+  Future<void> fetchStations() async {
+    try {
+      final response = await travelHomeService.getStations();
+      if (response != null && response['station'] != null) {
+        stations.value = response['station'];
+      } else {
+        AppToasting.showWarning('No stations found');
+      }
+    } catch (e) {
+      AppToasting.showError('Failed to load stations: $e');
+    }
+  }
+
+  Future<void> fetchCurrentBooking() async {
+    try {
+      isLoading.value = true;
+      final response = await travelHomeService.getBookingStatus(passengerId: passengerId.value);
+      if (response != null) {
+        currentBooking.value = response;
+      } else {
+        currentBooking.value = null;
+      }
+    } catch (e) {
+      AppToasting.showError('Failed to load booking status: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> fetchBookingHistory() async {
+    try {
+      isLoading.value = true;
+      final response = await travelHomeService.getBookingHistory(passengerId: passengerId.value, page: page.value);
+      if (response != null && response.docs.isNotEmpty) {
+        bookingHistory.addAll(response.docs);
+        page.value++;
+        hasMore.value = response.hasNextPage;
+      } else {
+        hasMore.value = false;
+      }
+    } catch (e) {
+      AppToasting.showError('Failed to load booking history: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  void openCheckout(double amount) {
+    var options = {
+      'key': 'rzp_test_huTmioKmO2Z4SA',
+      'amount': (amount * 100).toInt(),
+      'name': 'Coolie Booking',
+      'description': 'Payment for Coolie Service',
+      'prefill': {'contact': '9876543210', 'email': 'testuser@gmail.com'},
+      'external': {
+        'wallets': ['paytm'],
+      },
+    };
+
+    try {
+      _razorpay.open(options);
+    } catch (e) {
+      debugPrint("Error: $e");
+    }
+  }
+
+  void _handlePaymentSuccess(PaymentSuccessResponse response) {
+    AppToasting.showSuccess("Payment Successful Payment ID: ${response.paymentId}");
+  }
+
+  void _handlePaymentError(PaymentFailureResponse response) {
+    AppToasting.showError("Payment Failed: ${response.message ?? 'Unknown Error'}");
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {
+    Get.snackbar("External Wallet", response.walletName ?? "");
+  }
+
+  void showBookCoolieBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.6,
+          maxChildSize: 0.9,
+          minChildSize: 0.4,
+          builder: (_, scrollController) => SingleChildScrollView(
+            controller: scrollController,
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                children: [
+                  Container(
+                    width: 60,
+                    height: 5,
+                    decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)),
+                  ),
+                  const SizedBox(height: 20),
+                  Text("Book Coolie", style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 20),
+                  Obx(
+                    () => DropdownButtonFormField<String>(
+                      decoration: InputDecoration(
+                        labelText: "Select Station",
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      value: selectedStation.value,
+                      items: stations.map((station) {
+                        return DropdownMenuItem<String>(value: station['_id'] as String, child: Text(station['name'] as String));
+                      }).toList(),
+                      onChanged: (value) => selectedStation.value = value,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextBoxWidget(controller: platformController, hintText: "Platform Number"),
+                  const SizedBox(height: 16),
+                  TextBoxWidget(controller: coachNoController, hintText: "Coach Number (Optional)"),
+                  const SizedBox(height: 16),
+                  TextBoxWidget(controller: descriptionController, hintText: "Description"),
+                  const SizedBox(height: 16),
+                  TextBoxWidget(controller: destinationController, hintText: "Drop Point"),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Constants.instance.primary,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      onPressed: () {
+                        bookCoolie();
+                        Get.back();
+                        platformController.clear();
+                        coachNoController.clear();
+                        descriptionController.clear();
+                        destinationController.clear();
+                      },
+                      child: Text(
+                        "Book Now",
+                        style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> bookCoolie() async {
+    if (selectedStation.value == null || platformController.text.trim().isEmpty) {
+      AppToasting.showWarning("Please select a station and enter platform number");
+      return;
+    }
+    isLoading.value = true;
+    try {
+      final request = {
+        "passengerId": passengerId.value,
+        "stationId": selectedStation.value,
+        "station": platformController.text.trim(),
+        "coachNumber": coachNoController.text.trim(),
+        "description": descriptionController.text.trim(),
+        "destination": destinationController.text.trim(),
+      };
+      final result = await travelHomeService.bookCoolie(request); // Returns CreateBookingData?
+      if (result != null) {
+        AppToasting.showSuccess('Coolie booked successfully');
+        // Refresh after booking
+        currentBooking.value = null; // Reset to trigger refresh
+        fetchCurrentBooking();
+        bookingHistory.clear();
+        page.value = 1;
+        hasMore.value = true;
+        fetchBookingHistory();
+      }
+    } catch (e) {
+      debugPrint("ERROR in Book Coolie: $e");
+      AppToasting.showError('Failed to book coolie: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> getAPICalling() async {
+    try {
+      isLoading.value = true;
+      final response = await profileService.myProfile();
+      debugPrint("MODEL $response");
+      userProfile.value = GetUserProfile.fromJson(response);
+      debugPrint("userProfile.value ${userProfile.value.toJson()}");
+    } catch (e) {
+      AppToasting.showError('Failed to load profile: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  @override
+  void onClose() {
+    _razorpay.clear();
+    scrollController.dispose();
+    super.onClose();
+  }
+}

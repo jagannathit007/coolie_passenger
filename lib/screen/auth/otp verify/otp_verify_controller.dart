@@ -1,31 +1,64 @@
-import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
-import '../../../repository/authentication_repo.dart';
-import '../../../routes/route_name.dart';
-import '../../../services/app_storage.dart';
+import 'dart:async';
 import '../../../services/app_toasting.dart';
 import '../../../services/helper.dart';
+import '../auth_service.dart';
 
-class OtpVerifyController extends GetxController{
+class OtpVerifyController extends GetxController {
   final mobile = ''.obs;
   String deviceId = '';
   final verificationCodeController = TextEditingController();
+  late final AuthService authService;
+  final isLoading = false.obs;
+  final isResendEnabled = true.obs;
+  final countdown = 30.obs; // Countdown timer starting at 30 seconds
+  Timer? _timer;
+
   @override
   void onInit() {
-    _getDeviceId();
-    final args=Get.arguments;
-    if(args !=null){
-      mobile.value=args["mobileNo"];
-    }
     super.onInit();
+    _initializeServices();
+    _getDeviceId();
+    final args = Get.arguments;
+    if (args != null) {
+      mobile.value = args["mobileNo"];
+    }
+    _startTimer(); // Start the timer when the screen loads
   }
 
-  final isLoading=false.obs;
-  final AuthenticationRepo authenticationRepo = Get.find();
+  void _initializeServices() {
+    try {
+      authService = Get.find<AuthService>();
+    } catch (e) {
+      authService = Get.put(AuthService());
+    }
+  }
+
   Future<void> _getDeviceId() async {
     deviceId = await helper.getDeviceUniqueId();
     debugPrint("Device ID: $deviceId");
+  }
+
+  void _startTimer() {
+    isResendEnabled.value = false;
+    countdown.value = 30;
+    _timer?.cancel(); // Cancel any existing timer
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (countdown.value > 0) {
+        countdown.value--;
+      } else {
+        isResendEnabled.value = true;
+        timer.cancel();
+      }
+    });
+  }
+
+  @override
+  void onClose() {
+    _timer?.cancel();
+    super.onClose();
+    verificationCodeController.text = "";
   }
 
   Future<void> verifyOtp() async {
@@ -41,18 +74,11 @@ class OtpVerifyController extends GetxController{
 
     isLoading.value = true;
     try {
-      final request = {
-        "mobileNo": mobile.value,
-        "otpCode": verificationCodeController.text.trim(),
-        "fcm": "fcmToken.value", // Fixed: removed quotes around variable
-        "deviceId": deviceId,
-      };
+      final request = {"mobileNo": mobile.value, "otpCode": verificationCodeController.text.trim(), "fcm": "fcmToken.value", "deviceId": deviceId};
 
       debugPrint("OTP Verify Request: $request");
 
-      await authenticationRepo.otp(request);
-
-
+      await authService.otp(request);
     } catch (e) {
       AppToasting.showError("Something went wrong. Please try again.");
       debugPrint("Verify OTP Error: $e");
@@ -61,10 +87,17 @@ class OtpVerifyController extends GetxController{
     }
   }
 
-
-
-
-
-
-
+  Future<void> resendOtp() async {
+    isLoading.value = true;
+    try {
+      final request = {"mobileNo": mobile.value};
+      await authService.reSendOtp(request);
+      _startTimer(); // Restart timer after resending OTP
+    } catch (e) {
+      AppToasting.showError("Something went wrong. Please try again.");
+      debugPrint("Resend OTP Error: $e");
+    } finally {
+      isLoading.value = false;
+    }
+  }
 }
