@@ -2,114 +2,119 @@ class CreateBookingData {
   final String bookingId;
   final int otp;
   final String status;
-  final String assignedCollie;
+  final String? assignedCollie;
 
-  CreateBookingData({required this.bookingId, required this.otp, required this.status, required this.assignedCollie});
+  CreateBookingData({required this.bookingId, required this.otp, required this.status, this.assignedCollie});
 
   factory CreateBookingData.fromJson(Map<String, dynamic> json) => CreateBookingData(
     bookingId: json['bookingId'] ?? '',
-    otp: int.tryParse(json['otp'].toString()) ?? 0, // Handle string or int
+    otp: int.tryParse(json['otp'].toString()) ?? 0,
     status: json['status'] ?? '',
-    assignedCollie: json['assignedCollie'] ?? '',
+    assignedCollie: json['assignedCollie'],
   );
 
-  Map<String, dynamic> toJson() => {'bookingId': bookingId, 'otp': otp, 'status': status, 'assignedCollie': assignedCollie};
+  Map<String, dynamic> toJson() => {'bookingId': bookingId, 'otp': otp, 'status': status, if (assignedCollie != null) 'assignedCollie': assignedCollie};
 }
 
 class Booking {
   final PickupDetails pickupDetails;
   final Timestamp timestamp;
   final Fare fare;
-  final String id;
-  final String passengerId;
-  final String collieId;
+  final String? id;
+  final String? passengerId;
+  final String? collieId;
   final int otp;
   final String status;
   final String destination;
   final dynamic rating;
-  final String feedback;
-  final String complaint;
-  final bool isDeleted;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final String? feedback;
+  final String? complaint;
+  final bool? isDeleted;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
   final String bookingId;
   final String? assignedCollie;
+  final dynamic collie;
 
   Booking({
     required this.pickupDetails,
     required this.timestamp,
     required this.fare,
-    required this.id,
-    required this.passengerId,
-    required this.collieId,
+    this.id,
+    this.passengerId,
+    this.collieId,
     required this.otp,
     required this.status,
     required this.destination,
     this.rating,
-    required this.feedback,
-    required this.complaint,
-    required this.isDeleted,
-    required this.createdAt,
-    required this.updatedAt,
+    this.feedback,
+    this.complaint,
+    this.isDeleted,
+    this.createdAt,
+    this.updatedAt,
     required this.bookingId,
     this.assignedCollie,
+    this.collie,
   });
 
   factory Booking.fromJson(Map<String, dynamic> json) => Booking(
     pickupDetails: PickupDetails.fromJson(json['pickupDetails'] ?? {}),
     timestamp: Timestamp.fromJson(json['timestamp'] ?? {}),
     fare: Fare.fromJson(json['fare'] ?? {}),
-    id: json['_id'] ?? '',
-    passengerId: json['passengerId'] ?? '',
-    collieId: json['collieId'] ?? '',
-    otp: int.tryParse(json['otp'].toString()) ?? 0, // Handle string or int
+    id: json['_id'],
+    passengerId: json['passengerId'],
+    collieId: json['collieId'],
+    otp: int.tryParse(json['otp'].toString()) ?? 0,
     status: json['status'] ?? '',
     destination: json['destination'] ?? '',
     rating: json['rating'],
-    feedback: json['feedback'] ?? '',
-    complaint: json['complaint'] ?? '',
-    isDeleted: json['isDeleted'] ?? false,
-    createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
-    updatedAt: DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
+    feedback: json['feedback'],
+    complaint: json['complaint'],
+    isDeleted: json['isDeleted'],
+    createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt']) : null,
+    updatedAt: json['updatedAt'] != null ? DateTime.tryParse(json['updatedAt']) : null,
     bookingId: json['bookingId'] ?? '',
     assignedCollie: json['assignedCollie'],
+    collie: json['collie'],
   );
 
   Map<String, dynamic> toJson() => {
     'pickupDetails': pickupDetails.toJson(),
     'timestamp': timestamp.toJson(),
     'fare': fare.toJson(),
-    '_id': id,
-    'passengerId': passengerId,
-    'collieId': collieId,
+    if (id != null) '_id': id,
+    if (passengerId != null) 'passengerId': passengerId,
+    if (collieId != null) 'collieId': collieId,
     'otp': otp,
     'status': status,
     'destination': destination,
-    'rating': rating,
-    'feedback': feedback,
-    'complaint': complaint,
-    'isDeleted': isDeleted,
-    'createdAt': createdAt.toIso8601String(),
-    'updatedAt': updatedAt.toIso8601String(),
+    if (rating != null) 'rating': rating,
+    if (feedback != null) 'feedback': feedback,
+    if (complaint != null) 'complaint': complaint,
+    if (isDeleted != null) 'isDeleted': isDeleted,
+    if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
+    if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
     'bookingId': bookingId,
-    'assignedCollie': assignedCollie,
+    if (assignedCollie != null) 'assignedCollie': assignedCollie,
+    if (collie != null) 'collie': collie,
   };
 }
 
 class PickupDetails {
-  final int station;
-  final int coachNumber;
-  final String description;
+  final String? station;
+  final String? coachNumber;
+  final String? description;
 
-  PickupDetails({required this.station, required this.coachNumber, required this.description});
+  PickupDetails({this.station, this.coachNumber, this.description});
 
-  factory PickupDetails.fromJson(Map<String, dynamic> json) => PickupDetails(
-    station: int.tryParse(json['station'].toString()) ?? 0, // Handle string or int
-    coachNumber: int.tryParse(json['coachNumber'].toString()) ?? 0, // Handle string or int
-    description: json['description'] ?? '',
-  );
+  factory PickupDetails.fromJson(Map<String, dynamic> json) =>
+      PickupDetails(station: json['station']?.toString(), coachNumber: json['coachNumber'], description: json['description']);
 
-  Map<String, dynamic> toJson() => {'station': station, 'coachNumber': coachNumber, 'description': description};
+  Map<String, dynamic> toJson() => {
+    if (station != null) 'station': station,
+    if (coachNumber != null) 'coachNumber': coachNumber,
+    if (description != null) 'description': description,
+  };
 }
 
 class Timestamp {
@@ -123,7 +128,12 @@ class Timestamp {
   factory Timestamp.fromJson(Map<String, dynamic> json) =>
       Timestamp(bookedAt: json['bookedAt'] ?? '', acceptedAt: json['acceptedAt'], pickupTime: json['pickupTime'], completedAt: json['completedAt']);
 
-  Map<String, dynamic> toJson() => {'bookedAt': bookedAt, 'acceptedAt': acceptedAt, 'pickupTime': pickupTime, 'completedAt': completedAt};
+  Map<String, dynamic> toJson() => {
+    'bookedAt': bookedAt,
+    if (acceptedAt != null) 'acceptedAt': acceptedAt,
+    if (pickupTime != null) 'pickupTime': pickupTime,
+    if (completedAt != null) 'completedAt': completedAt,
+  };
 }
 
 class Fare {
@@ -135,10 +145,10 @@ class Fare {
   Fare({required this.baseFare, required this.waitingTime, required this.waitingCharges, required this.totalFare});
 
   factory Fare.fromJson(Map<String, dynamic> json) => Fare(
-    baseFare: int.tryParse(json['baseFare'].toString()) ?? 0, // Handle string or int
-    waitingTime: int.tryParse(json['waitingTime'].toString()) ?? 0, // Handle string or int
-    waitingCharges: int.tryParse(json['waitingCharges'].toString()) ?? 0, // Handle string or int
-    totalFare: int.tryParse(json['totalFare'].toString()) ?? 0, // Handle string or int
+    baseFare: int.tryParse(json['baseFare']?.toString() ?? '0') ?? 0,
+    waitingTime: int.tryParse(json['waitingTime']?.toString() ?? '0') ?? 0,
+    waitingCharges: int.tryParse(json['waitingCharges']?.toString() ?? '0') ?? 0,
+    totalFare: int.tryParse(json['totalFare']?.toString() ?? '0') ?? 0,
   );
 
   Map<String, dynamic> toJson() => {'baseFare': baseFare, 'waitingTime': waitingTime, 'waitingCharges': waitingCharges, 'totalFare': totalFare};
@@ -169,14 +179,14 @@ class PaginationData {
 
   factory PaginationData.fromJson(Map<String, dynamic> json) => PaginationData(
     docs: (json['docs'] as List<dynamic>?)?.map((e) => Booking.fromJson(e as Map<String, dynamic>)).toList() ?? [],
-    totalDocs: int.tryParse(json['totalDocs'].toString()) ?? 0, // Handle string or int
-    limit: int.tryParse(json['limit'].toString()) ?? 0, // Handle string or int
-    totalPages: int.tryParse(json['totalPages'].toString()) ?? 0, // Handle string or int
-    page: int.tryParse(json['page'].toString()) ?? 0, // Handle string or int
+    totalDocs: int.tryParse(json['totalDocs']?.toString() ?? '0') ?? 0,
+    limit: int.tryParse(json['totalDocs']?.toString() ?? '0') ?? 0,
+    totalPages: int.tryParse(json['totalPages']?.toString() ?? '0') ?? 0,
+    page: int.tryParse(json['page']?.toString() ?? '0') ?? 0,
     hasPrevPage: json['hasPrevPage'] ?? false,
     hasNextPage: json['hasNextPage'] ?? false,
-    prevPage: int.tryParse(json['prevPage'].toString()), // Handle string or null
-    nextPage: int.tryParse(json['nextPage'].toString()), // Handle string or null
+    prevPage: int.tryParse(json['prevPage']?.toString() ?? ''),
+    nextPage: int.tryParse(json['nextPage']?.toString() ?? ''),
   );
 
   Map<String, dynamic> toJson() => {
@@ -187,7 +197,7 @@ class PaginationData {
     'page': page,
     'hasPrevPage': hasPrevPage,
     'hasNextPage': hasNextPage,
-    'prevPage': prevPage,
-    'nextPage': nextPage,
+    if (prevPage != null) 'prevPage': prevPage,
+    if (nextPage != null) 'nextPage': nextPage,
   };
 }

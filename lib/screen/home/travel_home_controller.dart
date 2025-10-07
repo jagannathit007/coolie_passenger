@@ -1,12 +1,12 @@
 import 'dart:developer';
 
+import '../../widgets/text_box_widegt.dart';
 import '/screen/home/travel_home_service.dart';
 import '/screen/user%20profile/profile_service.dart';
 import '/models/get_user_profile_model.dart';
-import '/models/booking_models.dart'; // Import the new models
+import '/models/booking_models.dart';
 import '/services/app_storage.dart';
 import '/utils/app_constants.dart';
-import '/widgets/text_box_widegt.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -42,8 +42,8 @@ class TravelHomeController extends GetxController {
     _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
     _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
     _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
-    passengerId.value = AppStorage.read('passengerID');
-    log("Id== ${passengerId.value}");
+    passengerId.value = AppStorage.read('passengerID') ?? '';
+    log("Passenger ID: ${passengerId.value}");
     getAPICalling();
     fetchStations();
     fetchCurrentBooking();
@@ -76,6 +76,7 @@ class TravelHomeController extends GetxController {
       final response = await travelHomeService.getStations();
       if (response != null && response['station'] != null) {
         stations.value = response['station'];
+        log("Stations fetched: ${stations.length}");
       } else {
         AppToasting.showWarning('No stations found');
       }
@@ -88,15 +89,20 @@ class TravelHomeController extends GetxController {
     try {
       isLoading.value = true;
       final response = await travelHomeService.getBookingStatus(passengerId: passengerId.value);
-      if (response != null) {
-        currentBooking.value = response;
+      log("Booking Status Response: $response");
+      if (response != null && response is Map<String, dynamic>) {
+        currentBooking.value = Booking.fromJson(response);
+        log("Current Booking: ${currentBooking.value?.toJson()}");
       } else {
         currentBooking.value = null;
+        log("No current booking found");
       }
     } catch (e) {
+      log("Error fetching booking status: $e");
       AppToasting.showError('Failed to load booking status: $e');
     } finally {
       isLoading.value = false;
+      update(); // Ensure UI updates
     }
   }
 
@@ -104,17 +110,22 @@ class TravelHomeController extends GetxController {
     try {
       isLoading.value = true;
       final response = await travelHomeService.getBookingHistory(passengerId: passengerId.value, page: page.value);
+      log("Booking History Response: $response");
       if (response != null && response.docs.isNotEmpty) {
         bookingHistory.addAll(response.docs);
         page.value++;
         hasMore.value = response.hasNextPage;
+        log("Booking History Count: ${bookingHistory.length}, Has More: ${hasMore.value}");
       } else {
         hasMore.value = false;
+        log("No more booking history");
       }
     } catch (e) {
+      log("Error fetching booking history: $e");
       AppToasting.showError('Failed to load booking history: $e');
     } finally {
       isLoading.value = false;
+      update(); // Ensure UI updates
     }
   }
 
@@ -133,7 +144,7 @@ class TravelHomeController extends GetxController {
     try {
       _razorpay.open(options);
     } catch (e) {
-      debugPrint("Error: $e");
+      log("Payment Error: $e");
     }
   }
 
@@ -242,10 +253,9 @@ class TravelHomeController extends GetxController {
         "description": descriptionController.text.trim(),
         "destination": destinationController.text.trim(),
       };
-      final result = await travelHomeService.bookCoolie(request); // Returns CreateBookingData?
+      final result = await travelHomeService.bookCoolie(request);
       if (result != null) {
         AppToasting.showSuccess('Coolie booked successfully');
-        // Refresh after booking
         currentBooking.value = null; // Reset to trigger refresh
         fetchCurrentBooking();
         bookingHistory.clear();
@@ -254,10 +264,11 @@ class TravelHomeController extends GetxController {
         fetchBookingHistory();
       }
     } catch (e) {
-      debugPrint("ERROR in Book Coolie: $e");
+      log("ERROR in Book Coolie: $e");
       AppToasting.showError('Failed to book coolie: $e');
     } finally {
       isLoading.value = false;
+      update(); // Ensure UI updates
     }
   }
 
@@ -265,13 +276,15 @@ class TravelHomeController extends GetxController {
     try {
       isLoading.value = true;
       final response = await profileService.myProfile();
-      debugPrint("MODEL $response");
+      log("Profile Response: $response");
       userProfile.value = GetUserProfile.fromJson(response);
-      debugPrint("userProfile.value ${userProfile.value.toJson()}");
+      log("User Profile: ${userProfile.value.toJson()}");
     } catch (e) {
+      log("Error fetching profile: $e");
       AppToasting.showError('Failed to load profile: $e');
     } finally {
       isLoading.value = false;
+      update(); // Ensure UI updates
     }
   }
 
@@ -279,6 +292,11 @@ class TravelHomeController extends GetxController {
   void onClose() {
     _razorpay.clear();
     scrollController.dispose();
+    stationController.dispose();
+    platformController.dispose();
+    coachNoController.dispose();
+    descriptionController.dispose();
+    destinationController.dispose();
     super.onClose();
   }
 }

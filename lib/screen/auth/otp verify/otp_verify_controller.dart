@@ -24,7 +24,7 @@ class OtpVerifyController extends GetxController {
     if (args != null) {
       mobile.value = args["mobileNo"];
     }
-    _startTimer(); // Start the timer when the screen loads
+    _startTimer();
   }
 
   void _initializeServices() {

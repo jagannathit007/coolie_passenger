@@ -1,6 +1,4 @@
-
-
-import 'package:coolie_passanger/services/app_storage.dart';
+import '/services/app_storage.dart';
 import 'package:get/get.dart';
 import 'package:flutter/animation.dart';
 
@@ -26,7 +24,8 @@ class SplashController extends GetxController with GetSingleTickerProviderStateM
     animationController.forward();
     _navigateHome();
   }
-  void _navigateHome()async{
+
+  void _navigateHome() async {
     await Future.delayed(const Duration(seconds: 3));
     String token = await AppStorage.read("token") ?? "";
     if (token.isNotEmpty) {

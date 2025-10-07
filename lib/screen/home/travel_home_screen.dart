@@ -1,6 +1,6 @@
 import '/services/app_storage.dart';
 import '/screen/home/travel_home_controller.dart';
-import '/models/booking_models.dart'; // Import for types
+import '/models/booking_models.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -13,13 +13,21 @@ class TravelHomeScreen extends StatelessWidget {
   Future<bool> _onWillPop() async {
     return await Get.dialog<bool>(
           AlertDialog(
-            title: const Text("Exit App"),
-            content: const Text("Do you want to close the application?"),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Text("Exit App", style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+            content: Text("Do you want to close the application?", style: GoogleFonts.poppins()),
             actions: [
-              TextButton(onPressed: () => Get.back(result: false), child: const Text("No")),
               TextButton(
+                onPressed: () => Get.back(result: false),
+                child: Text("Cancel", style: GoogleFonts.poppins(color: Colors.grey[700])),
+              ),
+              ElevatedButton(
                 onPressed: () => Get.back(result: true),
-                child: Text("Yes", style: GoogleFonts.poppins(color: Constants.instance.instagramRed)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Constants.instance.instagramRed,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: Text("Exit", style: GoogleFonts.poppins(color: Colors.white)),
               ),
             ],
           ),
@@ -35,47 +43,50 @@ class TravelHomeScreen extends StatelessWidget {
         return WillPopScope(
           onWillPop: _onWillPop,
           child: Scaffold(
-            backgroundColor: const Color(0xffF5F5F4),
+            backgroundColor: Colors.grey[50],
             appBar: AppBar(
-              title: Text("Passenger Dashboard", style: TextStyle(color: Constants.instance.white)),
+              title: Text(
+                "Dashboard",
+                style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 20),
+              ),
               backgroundColor: Constants.instance.primary,
-              elevation: 4,
+              elevation: 0,
               iconTheme: IconThemeData(color: Constants.instance.white),
+              // actions: [IconButton(icon: const Icon(Icons.notifications_outlined), onPressed: () {})],
             ),
             drawer: _buildDrawer(controller),
-            body: Padding(
-              padding: const EdgeInsets.all(16.0),
+            body: RefreshIndicator(
+              onRefresh: () async {
+                await controller.fetchCurrentBooking();
+                controller.bookingHistory.clear();
+                controller.page.value = 1;
+                controller.hasMore.value = true;
+                await controller.fetchBookingHistory();
+              },
               child: Obx(
-                () => Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildCurrentBookingCard(controller),
-                    const SizedBox(height: 20),
-                    Text("Booking History", style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold)),
-                    Expanded(
-                      child: controller.bookingHistory.isEmpty
-                          ? const Center(child: Text("No Booking History"))
-                          : ListView.builder(
-                              controller: controller.scrollController,
-                              itemCount: controller.bookingHistory.length + (controller.hasMore.value ? 1 : 0),
-                              itemBuilder: (context, index) {
-                                if (index == controller.bookingHistory.length && controller.hasMore.value) {
-                                  return const Center(child: CircularProgressIndicator());
-                                }
-                                final booking = controller.bookingHistory[index];
-                                return BookingHistoryCard(booking: booking);
-                              },
-                            ),
-                    ),
-                  ],
-                ),
+                () => controller.isLoading.value && controller.bookingHistory.isEmpty
+                    ? const Center(child: CircularProgressIndicator())
+                    : SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildHeader(controller),
+                            _buildCurrentBookingCard(controller),
+                            const SizedBox(height: 24),
+                            _buildBookingHistorySection(controller),
+                          ],
+                        ),
+                      ),
               ),
             ),
             floatingActionButton: FloatingActionButton.extended(
               onPressed: () => controller.showBookCoolieBottomSheet(context),
-              icon: Icon(Icons.book, color: Constants.instance.white),
-              label: Text("Book Coolie", style: TextStyle(color: Constants.instance.white)),
+              icon: const Icon(Icons.add_circle_outline, size: 24),
+              label: Text("Book Coolie", style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600)),
               backgroundColor: Constants.instance.primary,
+              foregroundColor: Colors.white,
+              elevation: 6,
             ),
           ),
         );
@@ -83,58 +94,284 @@ class TravelHomeScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildHeader(TravelHomeController controller) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Constants.instance.primary,
+        borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(30), bottomRight: Radius.circular(30)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
+        child: Obx(() {
+          final name = controller.userProfile.value.user?.name ?? "Guest";
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Welcome back,", style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14)),
+              const SizedBox(height: 4),
+              Text(
+                name,
+                style: GoogleFonts.poppins(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+            ],
+          );
+        }),
+      ),
+    );
+  }
+
   Widget _buildCurrentBookingCard(TravelHomeController controller) {
     return Obx(() {
       final booking = controller.currentBooking.value;
-      return Card(
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: booking == null
-              ? const Center(
-                  child: Text("No Coolie Booked", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                )
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+
+      if (booking == null) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: [Colors.blue[50]!, Colors.purple[50]!], begin: Alignment.topLeft, end: Alignment.bottomRight),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.blue[100]!, width: 1),
+            ),
+            child: Column(
+              children: [
+                Icon(Icons.luggage, size: 48, color: Colors.grey[400]),
+                const SizedBox(height: 12),
+                Text(
+                  "No Active Booking",
+                  style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.grey[700]),
+                ),
+                const SizedBox(height: 8),
+                Text("Book a coolie to get started", style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[600])),
+              ],
+            ),
+          ),
+        );
+      }
+
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Constants.instance.primary, Constants.instance.primary.withOpacity(0.8)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [BoxShadow(color: Constants.instance.primary.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))],
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
+                ),
+                child: Column(
                   children: [
-                    Text("Current Booking", style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 12),
-                    _buildBookingDetail("Booking ID", booking.bookingId),
-                    _buildBookingDetail("Status", booking.status),
-                    _buildBookingDetail("OTP", booking.otp.toString()),
-                    _buildBookingDetail(
-                      "Pickup",
-                      "Platform ${booking.pickupDetails.station}, Coach ${booking.pickupDetails.coachNumber}, ${booking.pickupDetails.description}",
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(color: Constants.instance.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                          child: Icon(Icons.check_circle, color: Constants.instance.primary, size: 28),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Active Booking",
+                                style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey[800]),
+                              ),
+                              const SizedBox(height: 4),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                decoration: BoxDecoration(color: _getStatusColor(booking.status), borderRadius: BorderRadius.circular(20)),
+                                child: Text(
+                                  booking.status.capitalizeFirst ?? booking.status,
+                                  style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    _buildBookingDetail("Destination", booking.destination),
-                    _buildBookingDetail("Booked At", booking.timestamp.bookedAt),
-                    _buildBookingDetail("Accepted At", booking.timestamp.acceptedAt ?? "N/A"),
-                    _buildBookingDetail("Pickup Time", booking.timestamp.pickupTime ?? "N/A"),
-                    _buildBookingDetail("Completed At", booking.timestamp.completedAt ?? "N/A"),
-                    _buildBookingDetail("Fare", "₹${booking.fare.totalFare}"),
-                    const Divider(),
-                    Text("Coolie Details", style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600)),
-                    _buildBookingDetail("Name", booking.assignedCollie ?? booking.collieId ?? "N/A"),
-                    _buildBookingDetail("Mobile", "N/A"), // Not in response; extend if needed
-                    _buildBookingDetail("Rate Card", "N/A"), // Not in response; extend if needed
+                    const SizedBox(height: 20),
+                    _buildInfoRow(Icons.qr_code_2, "Booking ID", booking.bookingId),
+                    const Divider(height: 24),
+                    _buildInfoRow(Icons.pin, "OTP", booking.otp.toString(), isHighlight: true),
                   ],
                 ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    _buildWhiteInfoRow(
+                      Icons.location_on_outlined,
+                      "Pickup Location",
+                      "Platform ${booking.pickupDetails.station ?? 'N/A'}, Coach ${booking.pickupDetails.coachNumber ?? 'N/A'}",
+                    ),
+                    const SizedBox(height: 12),
+                    _buildWhiteInfoRow(Icons.my_location_outlined, "Destination", booking.destination),
+                    const SizedBox(height: 12),
+                    _buildWhiteInfoRow(Icons.currency_rupee, "Fare", "₹${booking.fare.totalFare}"),
+                    const SizedBox(height: 20),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(12)),
+                      child: Row(
+                        children: [
+                          const CircleAvatar(
+                            radius: 24,
+                            backgroundColor: Colors.white,
+                            child: Icon(Icons.person, color: Colors.grey, size: 28),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Assigned Coolie", style: GoogleFonts.poppins(fontSize: 12, color: Colors.white70)),
+                                const SizedBox(height: 4),
+                                Text(
+                                  booking.assignedCollie ?? booking.collieId ?? "Waiting...",
+                                  style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       );
     });
   }
 
-  Widget _buildBookingDetail(String title, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(title, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500)),
-          Expanded(
-            child: Text(value, style: GoogleFonts.poppins(fontSize: 14), textAlign: TextAlign.end),
+  Widget _buildInfoRow(IconData icon, String label, String value, {bool isHighlight = false}) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: Colors.grey[600]),
+        const SizedBox(width: 12),
+        Text("$label: ", style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[600])),
+        Expanded(
+          child: Text(
+            value,
+            style: GoogleFonts.poppins(
+              fontSize: isHighlight ? 18 : 14,
+              fontWeight: isHighlight ? FontWeight.bold : FontWeight.w600,
+              color: isHighlight ? Constants.instance.primary : Colors.grey[800],
+            ),
+            textAlign: TextAlign.end,
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWhiteInfoRow(IconData icon, String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 20, color: Colors.white),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: GoogleFonts.poppins(fontSize: 12, color: Colors.white70)),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return Colors.green;
+      case 'accepted':
+        return Colors.blue;
+      case 'pending':
+        return Colors.orange;
+      case 'cancelled':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  Widget _buildBookingHistorySection(TravelHomeController controller) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.history, size: 24, color: Colors.grey[700]),
+              const SizedBox(width: 8),
+              Text(
+                "Booking History",
+                style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey[800]),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Obx(() {
+            if (controller.bookingHistory.isEmpty && !controller.isLoading.value) {
+              return Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(40),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+                child: Column(
+                  children: [
+                    Icon(Icons.inbox_outlined, size: 64, color: Colors.grey[300]),
+                    const SizedBox(height: 16),
+                    Text("No Booking History", style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey[600])),
+                  ],
+                ),
+              );
+            }
+
+            return ListView.builder(
+              controller: controller.scrollController,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: controller.bookingHistory.length + (controller.hasMore.value ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index == controller.bookingHistory.length && controller.hasMore.value) {
+                  return const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+                final booking = controller.bookingHistory[index];
+                return BookingHistoryCard(booking: booking);
+              },
+            );
+          }),
+          const SizedBox(height: 100),
         ],
       ),
     );
@@ -148,42 +385,104 @@ class BookingHistoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4))],
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(12.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildBookingDetail("Booking ID", booking.bookingId),
-            _buildBookingDetail("Status", booking.status),
-            _buildBookingDetail(
-              "Pickup",
-              "Platform ${booking.pickupDetails.station}, Coach ${booking.pickupDetails.coachNumber}, ${booking.pickupDetails.description}",
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    booking.bookingId,
+                    style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey[800]),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: _getStatusColor(booking.status).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: _getStatusColor(booking.status), width: 1),
+                  ),
+                  child: Text(
+                    booking.status.capitalizeFirst ?? booking.status,
+                    style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: _getStatusColor(booking.status)),
+                  ),
+                ),
+              ],
             ),
-            _buildBookingDetail("Destination", booking.destination),
-            _buildBookingDetail("Fare", "₹${booking.fare.totalFare}"),
-            _buildBookingDetail("Booked At", booking.timestamp.bookedAt),
+            const SizedBox(height: 12),
+            const Divider(height: 1),
+            const SizedBox(height: 12),
+            _buildHistoryDetail(
+              Icons.location_on_outlined,
+              "Platform ${booking.pickupDetails.station ?? 'N/A'}, Coach ${booking.pickupDetails.coachNumber ?? 'N/A'}",
+            ),
+            const SizedBox(height: 8),
+            _buildHistoryDetail(Icons.my_location_outlined, booking.destination),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildHistoryDetail(Icons.calendar_today_outlined, booking.timestamp.bookedAt, isSmall: true),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(color: Constants.instance.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                  child: Row(
+                    children: [
+                      Icon(Icons.currency_rupee, size: 16, color: Constants.instance.primary),
+                      Text(
+                        (booking.fare.totalFare).toString(),
+                        style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: Constants.instance.primary),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildBookingDetail(String title, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(title, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500)),
-          Expanded(
-            child: Text(value, style: GoogleFonts.poppins(fontSize: 14), textAlign: TextAlign.end),
+  Widget _buildHistoryDetail(IconData icon, String value, {bool isSmall = false}) {
+    return Row(
+      children: [
+        Icon(icon, size: isSmall ? 14 : 16, color: Colors.grey[600]),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            value,
+            style: GoogleFonts.poppins(fontSize: isSmall ? 12 : 14, color: Colors.grey[700]),
           ),
-        ],
-      ),
+        ),
+      ],
     );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return Colors.green;
+      case 'accepted':
+        return Colors.blue;
+      case 'pending':
+        return Colors.orange;
+      case 'cancelled':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
   }
 }
 
@@ -192,31 +491,78 @@ Widget _buildDrawer(TravelHomeController controller) {
     return Drawer(
       child: Column(
         children: [
-          UserAccountsDrawerHeader(
-            accountName: Text(controller.userProfile.value.user?.name ?? "Guest", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
-            accountEmail: Text(controller.userProfile.value.user?.mobileNo ?? "", style: GoogleFonts.poppins()),
-            currentAccountPicture: const CircleAvatar(
-              backgroundColor: Colors.white,
-              child: Icon(Icons.person, size: 40, color: Colors.grey),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Constants.instance.primary, Constants.instance.primary.withOpacity(0.8)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
             ),
-            decoration: BoxDecoration(color: Constants.instance.primary),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4))],
+                  ),
+                  child: const CircleAvatar(
+                    radius: 36,
+                    backgroundColor: Colors.grey,
+                    child: Icon(Icons.person, size: 40, color: Colors.white),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  controller.userProfile.value.user?.name ?? "Guest",
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.white),
+                ),
+                const SizedBox(height: 4),
+                Text(controller.userProfile.value.user?.mobileNo ?? "", style: GoogleFonts.poppins(fontSize: 14, color: Colors.white70)),
+              ],
+            ),
           ),
           Expanded(
             child: ListView(
-              padding: EdgeInsets.zero,
+              padding: const EdgeInsets.symmetric(vertical: 8),
               children: [
                 ListTile(
-                  leading: const Icon(Icons.person),
-                  title: Text('Profile', style: GoogleFonts.poppins()),
+                  leading: Icon(Icons.person_outline, color: Constants.instance.primary),
+                  title: Text('My Profile', style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
+                  trailing: const Icon(Icons.chevron_right, color: Colors.grey),
                   onTap: () {
                     Get.back();
                     Get.toNamed(RouteName.profileScreen);
                   },
                 ),
-                const Divider(),
                 ListTile(
-                  leading: const Icon(Icons.logout),
-                  title: Text('Logout', style: GoogleFonts.poppins()),
+                  leading: Icon(Icons.history, color: Constants.instance.primary),
+                  title: Text('Booking History', style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
+                  trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                  onTap: () {
+                    Get.back();
+                  },
+                ),
+                ListTile(
+                  leading: Icon(Icons.support_agent_outlined, color: Constants.instance.primary),
+                  title: Text('Help & Support', style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
+                  trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                  onTap: () {
+                    Get.back();
+                  },
+                ),
+                const Divider(height: 32),
+                ListTile(
+                  leading: const Icon(Icons.logout, color: Colors.red),
+                  title: Text(
+                    'Logout',
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w500, color: Colors.red),
+                  ),
                   onTap: () async {
                     await AppStorage.clearAll();
                     Get.offAllNamed(RouteName.signIn);

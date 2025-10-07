@@ -129,7 +129,7 @@ class ProfileController extends GetxController {
     if (response != null) {
       AppToasting.showSuccess("Profile updated successfully!");
       await fetchProfile();
-      Get.offNamed(RouteName.profileScreen);
+      Get.back();
     }
   }
 
