@@ -78,7 +78,7 @@ mixin _ColorMixin {
   //! NEW THEME
   // Modern professional palette
   // Primary: Indigo/Blue, Secondary: Teal
-  final primary = const Color(0xFFE61919); // Indigo/Blue 600
+  final primary = const Color(0xFFC60000); // Indigo/Blue 600
   final secondary = const Color(0xFFF5C242); // Teal 500
   final secondaryCard = const Color(0xFFD1FAE5); // Soft teal tint
   final error = const Color(0xffD32F2F);
