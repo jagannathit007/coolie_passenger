@@ -1,4 +1,4 @@
-package com.itfuturz.coolie_passanger
+package com.itf.cooliePassenger
 
 import io.flutter.embedding.android.FlutterActivity
 
