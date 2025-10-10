@@ -443,6 +443,7 @@ class BookingHistoryCard extends StatelessWidget {
                 ),
               ],
             ),
+
             const SizedBox(height: 12),
             const Divider(height: 1),
             const SizedBox(height: 12),
@@ -454,9 +455,8 @@ class BookingHistoryCard extends StatelessWidget {
             _buildHistoryDetail(Icons.my_location_outlined, booking.destination),
             const SizedBox(height: 8),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildHistoryDetail(Icons.calendar_today_outlined, booking.timestamp.bookedAt, isSmall: true),
+                Flexible(child: _buildHistoryDetail(Icons.calendar_today_outlined, booking.timestamp.bookedAt, isSmall: true)),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(color: Constants.instance.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),

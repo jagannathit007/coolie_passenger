@@ -131,9 +131,6 @@ class TravelHomeController extends GetxController {
         page.value++;
         hasMore.value = response.hasNextPage;
         log("Booking History Count: ${bookingHistory.length}, Has More: ${hasMore.value}");
-
-        // Force UI update
-        update();
       } else {
         hasMore.value = false;
         if (page.value == 1) {
@@ -147,7 +144,6 @@ class TravelHomeController extends GetxController {
       hasMore.value = false;
     } finally {
       isLoading.value = false;
-      update();
     }
   }
 
