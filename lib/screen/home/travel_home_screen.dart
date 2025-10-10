@@ -1,3 +1,7 @@
+import 'dart:developer';
+
+import 'package:coolie_passanger/services/helper.dart';
+
 import '/services/app_storage.dart';
 import '/screen/home/travel_home_controller.dart';
 import '/models/booking_models.dart';
@@ -37,12 +41,12 @@ class TravelHomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GetBuilder<TravelHomeController>(
-      init: TravelHomeController(),
-      builder: (controller) {
-        return WillPopScope(
-          onWillPop: _onWillPop,
-          child: Scaffold(
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: GetBuilder<TravelHomeController>(
+        init: TravelHomeController(),
+        builder: (controller) {
+          return Scaffold(
             backgroundColor: Colors.grey[50],
             appBar: AppBar(
               title: Text(
@@ -64,7 +68,7 @@ class TravelHomeScreen extends StatelessWidget {
                 await controller.fetchBookingHistory();
               },
               child: Obx(
-                () => controller.isLoading.value && controller.bookingHistory.isEmpty
+                () => controller.isLoading.value && controller.bookingHistory.isEmpty && controller.currentBooking.value == null
                     ? const Center(child: CircularProgressIndicator())
                     : SingleChildScrollView(
                         physics: const AlwaysScrollableScrollPhysics(),
@@ -88,9 +92,9 @@ class TravelHomeScreen extends StatelessWidget {
               foregroundColor: Colors.white,
               elevation: 6,
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
@@ -223,7 +227,7 @@ class TravelHomeScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     _buildWhiteInfoRow(Icons.my_location_outlined, "Destination", booking.destination),
                     const SizedBox(height: 12),
-                    _buildWhiteInfoRow(Icons.currency_rupee, "Fare", "₹${booking.fare.totalFare}"),
+                    _buildWhiteInfoRow(Icons.currency_rupee, "Fare", "₹${booking.collie?.rateCard.baseRate}"),
                     const SizedBox(height: 20),
                     Container(
                       padding: const EdgeInsets.all(16),
@@ -243,12 +247,31 @@ class TravelHomeScreen extends StatelessWidget {
                                 Text("Assigned Coolie", style: GoogleFonts.poppins(fontSize: 12, color: Colors.white70)),
                                 const SizedBox(height: 4),
                                 Text(
-                                  booking.assignedCollie ?? booking.collieId ?? "Waiting...",
+                                  booking.assignedCollie ?? booking.collie!.name,
                                   style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
                                 ),
+                                if (booking.collie!.mobileNo.isNotEmpty) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    booking.collie!.mobileNo,
+                                    style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white),
+                                  ),
+                                ],
                               ],
                             ),
                           ),
+                          // Call Button
+                          if (booking.collie!.mobileNo.isNotEmpty)
+                            GestureDetector(
+                              onTap: () {
+                                helper.makePhoneCall(booking.collie!.mobileNo);
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(8)),
+                                child: const Icon(Icons.phone, color: Colors.white, size: 24),
+                              ),
+                            ),
                         ],
                       ),
                     ),

@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:get/get.dart';
 import '../../api constants/api_manager.dart';
 import '../../api constants/network_constants.dart';
@@ -33,17 +35,28 @@ class TravelHomeService extends GetxService {
     }
   }
 
-  Future<dynamic> getBookingHistory({required String passengerId, required int page}) async {
+  Future<PaginationData?> getBookingHistory({required String passengerId, required int page}) async {
     try {
       final response = await apiManager.post(NetworkConstants.getBookingHistory, data: {"passengerId": passengerId, "page": page});
+
+      log("Booking History API Response: ${response.data}");
+
       if (response.status != 200) {
-        AppToasting.showWarning(response.message);
-        return [];
+        AppToasting.showWarning(response.message ?? 'Failed to fetch booking history');
+        return null;
       }
+
+      // Check if we have data in the response
+      if (response.data == null || response.data["docs"] == null) {
+        AppToasting.showWarning('No booking history data found');
+        return null;
+      }
+
       return PaginationData.fromJson(response.data);
     } catch (err) {
+      log("Error fetching booking history: $err");
       AppToasting.showError('Error fetching booking history: $err');
-      return [];
+      return null;
     }
   }
 

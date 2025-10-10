@@ -36,18 +36,14 @@ class TravelHomeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _initializeTServices();
-    _initializePServices();
-    _razorpay = Razorpay();
-    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
-    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
-    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+    _initializeServices();
+    // _razorpay = Razorpay();
+    // _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+    // _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+    // _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
     passengerId.value = AppStorage.read('passengerID') ?? '';
     log("Passenger ID: ${passengerId.value}");
-    getAPICalling();
-    fetchStations();
-    fetchCurrentBooking();
-    fetchBookingHistory();
+    _fetchInitialData();
     scrollController.addListener(() {
       if (scrollController.position.pixels == scrollController.position.maxScrollExtent && hasMore.value) {
         fetchBookingHistory();
@@ -55,7 +51,12 @@ class TravelHomeController extends GetxController {
     });
   }
 
-  void _initializePServices() {
+  void _initializeServices() {
+    try {
+      travelHomeService = Get.find<TravelHomeService>();
+    } catch (e) {
+      travelHomeService = Get.put(TravelHomeService());
+    }
     try {
       profileService = Get.find<ProfileService>();
     } catch (e) {
@@ -63,11 +64,25 @@ class TravelHomeController extends GetxController {
     }
   }
 
-  void _initializeTServices() {
+  Future<void> _fetchInitialData() async {
+    isLoading.value = true;
+
     try {
-      travelHomeService = Get.find<TravelHomeService>();
+      await getAPICalling();
+      if (userProfile.value.user == null) {
+        throw Exception("Failed to fetch user profile");
+      }
+      await fetchStations();
+      if (stations.isEmpty) {
+        throw Exception("No stations found");
+      }
+      await fetchCurrentBooking();
+      await fetchBookingHistory();
     } catch (e) {
-      travelHomeService = Get.put(TravelHomeService());
+      log("Error in initial data fetch: $e");
+      AppToasting.showError('Failed to load initial data: $e');
+    } finally {
+      isLoading.value = false;
     }
   }
 
@@ -81,13 +96,13 @@ class TravelHomeController extends GetxController {
         AppToasting.showWarning('No stations found');
       }
     } catch (e) {
+      log("Error fetching stations: $e");
       AppToasting.showError('Failed to load stations: $e');
     }
   }
 
   Future<void> fetchCurrentBooking() async {
     try {
-      isLoading.value = true;
       final response = await travelHomeService.getBookingStatus(passengerId: passengerId.value);
       log("Booking Status Response: $response");
       if (response != null && response is Map<String, dynamic>) {
@@ -100,32 +115,39 @@ class TravelHomeController extends GetxController {
     } catch (e) {
       log("Error fetching booking status: $e");
       AppToasting.showError('Failed to load booking status: $e');
-    } finally {
-      isLoading.value = false;
-      update(); // Ensure UI updates
     }
   }
 
   Future<void> fetchBookingHistory() async {
     try {
       isLoading.value = true;
+
       final response = await travelHomeService.getBookingHistory(passengerId: passengerId.value, page: page.value);
-      log("Booking History Response: $response");
+
+      log("Booking History Parsed: ${response?.docs.length}");
+
       if (response != null && response.docs.isNotEmpty) {
         bookingHistory.addAll(response.docs);
         page.value++;
         hasMore.value = response.hasNextPage;
         log("Booking History Count: ${bookingHistory.length}, Has More: ${hasMore.value}");
+
+        // Force UI update
+        update();
       } else {
         hasMore.value = false;
-        log("No more booking history");
+        if (page.value == 1) {
+          log("No booking history found");
+          bookingHistory.clear();
+        }
       }
     } catch (e) {
       log("Error fetching booking history: $e");
       AppToasting.showError('Failed to load booking history: $e');
+      hasMore.value = false;
     } finally {
       isLoading.value = false;
-      update(); // Ensure UI updates
+      update();
     }
   }
 
@@ -244,6 +266,7 @@ class TravelHomeController extends GetxController {
       return;
     }
     isLoading.value = true;
+
     try {
       final request = {
         "passengerId": passengerId.value,
@@ -257,24 +280,22 @@ class TravelHomeController extends GetxController {
       if (result != null) {
         AppToasting.showSuccess('Coolie booked successfully');
         currentBooking.value = null; // Reset to trigger refresh
-        fetchCurrentBooking();
+        await fetchCurrentBooking();
         bookingHistory.clear();
         page.value = 1;
         hasMore.value = true;
-        fetchBookingHistory();
+        await fetchBookingHistory();
       }
     } catch (e) {
       log("ERROR in Book Coolie: $e");
       AppToasting.showError('Failed to book coolie: $e');
     } finally {
       isLoading.value = false;
-      update(); // Ensure UI updates
     }
   }
 
   Future<void> getAPICalling() async {
     try {
-      isLoading.value = true;
       final response = await profileService.myProfile();
       log("Profile Response: $response");
       userProfile.value = GetUserProfile.fromJson(response);
@@ -282,9 +303,6 @@ class TravelHomeController extends GetxController {
     } catch (e) {
       log("Error fetching profile: $e");
       AppToasting.showError('Failed to load profile: $e');
-    } finally {
-      isLoading.value = false;
-      update(); // Ensure UI updates
     }
   }
 
