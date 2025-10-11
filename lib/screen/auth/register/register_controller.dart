@@ -18,9 +18,9 @@ class RegisterController extends GetxController {
 
   String? latitude;
   String? longitude;
-  String? pincode;
-  String? city;
-  String? state;
+  String? pincode = "";
+  String? city= "";
+  String? state= "";
 
   late final AuthService authService;
   final registerFormKey = GlobalKey<FormState>();
@@ -78,15 +78,16 @@ class RegisterController extends GetxController {
   }
 
   Future<void> registerUser() async {
-    if (nameController.text.isEmpty || mobileController.text.isEmpty || addressController.text.isEmpty) {
+    // if (nameController.text.isEmpty || mobileController.text.isEmpty || addressController.text.isEmpty) {
+    if (nameController.text.isEmpty || mobileController.text.isEmpty) {
       AppToasting.showError("Please fill all required fields");
       return;
     }
 
-    if (pincode == null || city == null || state == null) {
-      AppToasting.showError("Location must include pincode, city, and state");
-      return;
-    }
+    // if (pincode == null || city == null || state == null) {
+    //   AppToasting.showError("Location must include pincode, city, and state");
+    //   return;
+    // }
 
     isLoading.value = true;
 

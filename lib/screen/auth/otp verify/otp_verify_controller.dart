@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'dart:async';
 import '../../../services/app_toasting.dart';
 import '../../../services/helper.dart';
+import '../../../services/notification_service.dart';
 import '../auth_service.dart';
 
 class OtpVerifyController extends GetxController {
@@ -14,12 +15,15 @@ class OtpVerifyController extends GetxController {
   final isResendEnabled = true.obs;
   final countdown = 30.obs; // Countdown timer starting at 30 seconds
   Timer? _timer;
+  String fcmToken = '';
+
 
   @override
   void onInit() {
     super.onInit();
     _initializeServices();
     _getDeviceId();
+    _getFcmToken();
     final args = Get.arguments;
     if (args != null) {
       mobile.value = args["mobileNo"];
@@ -33,6 +37,11 @@ class OtpVerifyController extends GetxController {
     } catch (e) {
       authService = Get.put(AuthService());
     }
+  }
+
+  Future<void> _getFcmToken() async {
+    fcmToken = (await notificationService.getToken())!;
+    debugPrint("FCM Token: $fcmToken");
   }
 
   Future<void> _getDeviceId() async {
@@ -74,7 +83,7 @@ class OtpVerifyController extends GetxController {
 
     isLoading.value = true;
     try {
-      final request = {"mobileNo": mobile.value, "otpCode": verificationCodeController.text.trim(), "fcm": "fcmToken.value", "deviceId": deviceId};
+      final request = {"mobileNo": mobile.value, "otpCode": verificationCodeController.text.trim(), "fcm": fcmToken, "deviceId": deviceId};
 
       debugPrint("OTP Verify Request: $request");
 

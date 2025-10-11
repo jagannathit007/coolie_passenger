@@ -244,22 +244,21 @@ class _RegisterState extends State<Register> {
                                     hintFontSize: 14,
                                     keyboardType: TextInputType.emailAddress,
                                   ),
-                                  const SizedBox(height: 10),
-                                  // Address Field
-                                  CustomFormField(
-                                    controller: controller.addressController,
-                                    hintText: "Address (Auto from GPS)",
-                                    borderEnabled: true,
-                                    style: const TextStyle(fontSize: 15),
-                                    borderRadius: 12,
-                                    hintFontSize: 14,
-                                    isRequiredMark: true,
-                                    readOnly: true,
-                                    suffix: IconButton(
-                                      onPressed: _getCurrentLocation,
-                                      icon: Icon(Icons.location_pin, color: Constants.instance.primary),
-                                    ),
-                                  ),
+                                  // const SizedBox(height: 10),
+                                  // // Address Field
+                                  // CustomFormField(
+                                  //   controller: controller.addressController,
+                                  //   hintText: "Address (Auto from GPS)",
+                                  //   borderEnabled: true,
+                                  //   style: const TextStyle(fontSize: 15),
+                                  //   borderRadius: 12,
+                                  //   hintFontSize: 14,
+                                  //   isRequiredMark: true,
+                                  //   suffix: IconButton(
+                                  //     onPressed: _getCurrentLocation,
+                                  //     icon: Icon(Icons.location_pin, color: Constants.instance.primary),
+                                  //   ),
+                                  // ),
                                   const SizedBox(height: 18),
                                   Obx(
                                     () => AnimatedScale(

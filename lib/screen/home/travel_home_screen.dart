@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:coolie_passanger/services/app_toasting.dart';
 import 'package:coolie_passanger/services/helper.dart';
 

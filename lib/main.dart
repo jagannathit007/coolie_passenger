@@ -67,6 +67,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     await notificationService.init();
     notificationService.showRemoteNotificationAndroid(message);
     log("Background message received: ${message.data}");
+    _onMessageOpenedApp(message);
   }
 }
 
@@ -75,6 +76,7 @@ void _onForegroundMessage(RemoteMessage message) async {
     lastHandledMessageId = message.messageId;
     notificationService.showRemoteNotificationAndroid(message);
     log("Foreground message received: ${message.data}");
+    _onMessageOpenedApp(message);
   }
 }
 
@@ -102,13 +104,11 @@ void _handleNotificationClick(RemoteMessage message) async {
     await Future.delayed(const Duration(milliseconds: 500));
 
     if (Get.isRegistered<TravelHomeController>()) {
-      Get.toNamed(RouteName.travelHomeScreen);
-      // final homeCtrl = Get.find<TravelHomeController>();
-      // homeCtrl.bookingId.value = bookingId;
-      // log("Updated bookingId in HomeController: ${homeCtrl.bookingId.value}");
+      TravelHomeController().onInit();
     } else {
       log("HomeController not registered, navigating to Home with bookingId");
       // Get.toNamed(RouteName.travelHomeScreen);
+      Get.toNamed(RouteName.travelHomeScreen);
     }
   }
 }
