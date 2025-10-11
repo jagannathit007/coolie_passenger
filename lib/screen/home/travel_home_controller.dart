@@ -10,11 +10,11 @@ import '/utils/app_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:razorpay_flutter/razorpay_flutter.dart';
+// import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../../services/app_toasting.dart';
 
 class TravelHomeController extends GetxController {
-  late Razorpay _razorpay;
+  // late Razorpay _razorpay;
   final passengerId = ''.obs;
   final isLoading = false.obs;
   Rx<GetUserProfile> userProfile = GetUserProfile().obs;
@@ -160,23 +160,23 @@ class TravelHomeController extends GetxController {
     };
 
     try {
-      _razorpay.open(options);
+      // _razorpay.open(options);
     } catch (e) {
       log("Payment Error: $e");
     }
   }
 
-  void _handlePaymentSuccess(PaymentSuccessResponse response) {
-    AppToasting.showSuccess("Payment Successful Payment ID: ${response.paymentId}");
-  }
+  // void _handlePaymentSuccess(PaymentSuccessResponse response) {
+  //   AppToasting.showSuccess("Payment Successful Payment ID: ${response.paymentId}");
+  // }
 
-  void _handlePaymentError(PaymentFailureResponse response) {
-    AppToasting.showError("Payment Failed: ${response.message ?? 'Unknown Error'}");
-  }
+  // void _handlePaymentError(PaymentFailureResponse response) {
+  //   AppToasting.showError("Payment Failed: ${response.message ?? 'Unknown Error'}");
+  // }
 
-  void _handleExternalWallet(ExternalWalletResponse response) {
-    Get.snackbar("External Wallet", response.walletName ?? "");
-  }
+  // void _handleExternalWallet(ExternalWalletResponse response) {
+  //   Get.snackbar("External Wallet", response.walletName ?? "");
+  // }
 
   void showBookCoolieBottomSheet(BuildContext context) {
     showModalBottomSheet(
@@ -304,7 +304,7 @@ class TravelHomeController extends GetxController {
 
   @override
   void onClose() {
-    _razorpay.clear();
+    // _razorpay.clear();
     scrollController.dispose();
     stationController.dispose();
     platformController.dispose();
