@@ -18,6 +18,7 @@ class NetworkConstants {
   static const String getUserProfile = 'api/users/userProfile';
   static const String editProfile = 'api/users/updateUser';
   static const String bookCoolie = 'api/users/createBooking';
+  static const String cancelBooking = 'api/users/cancelBooking';
   static const String getBookingStatus = 'api/users/getBookingStatus';
   static const String getBookingHistory = 'api/users/getBookingHistory';
   static const String rateBooking = 'api/users/rateBooking';

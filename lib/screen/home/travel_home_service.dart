@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../api constants/api_manager.dart';
 import '../../api constants/network_constants.dart';
@@ -17,6 +18,26 @@ class TravelHomeService extends GetxService {
       return response.data;
     } catch (err) {
       AppToasting.showError('Error booking coolie: $err');
+      return null;
+    }
+  }
+
+  Future<dynamic> cancelBooking(String bookingId) async {
+    try {
+      final response = await apiManager.post(
+        '${NetworkConstants.cancelBooking}/$bookingId',
+        data: {"bookingId": bookingId},
+      );
+
+      if (response.status != 200) {
+        AppToasting.showWarning(response.data?.message ?? 'Failed to cancel booking');
+        return null;
+      }
+
+      log("Cancel Booking Response: ${response.data}");
+      return response.data;
+    } catch (err) {
+      AppToasting.showError('Error canceling booking: ${err.toString()}');
       return null;
     }
   }

@@ -32,6 +32,9 @@ class TravelHomeController extends GetxController {
   final page = 1.obs;
   final hasMore = true.obs;
   final scrollController = ScrollController();
+  // Add FocusNode to track keyboard focus
+  final focusNode = FocusNode();
+  final isKeyboardVisible = false.obs;
 
   @override
   void onInit() {
@@ -48,6 +51,9 @@ class TravelHomeController extends GetxController {
       if (scrollController.position.pixels == scrollController.position.maxScrollExtent && hasMore.value) {
         fetchBookingHistory();
       }
+    });
+    focusNode.addListener(() {
+      isKeyboardVisible.value = focusNode.hasFocus;
     });
   }
 
@@ -184,70 +190,117 @@ class TravelHomeController extends GetxController {
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
       builder: (context) {
-        return DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: 0.6,
-          maxChildSize: 0.9,
-          minChildSize: 0.4,
-          builder: (_, scrollController) => SingleChildScrollView(
-            controller: scrollController,
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                children: [
-                  Container(
-                    width: 60,
-                    height: 5,
-                    decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)),
-                  ),
-                  const SizedBox(height: 20),
-                  Text("Book Coolie", style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 20),
-                  Obx(
-                    () => DropdownButtonFormField<String>(
-                      decoration: InputDecoration(
-                        labelText: "Select Station",
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      value: selectedStation.value,
-                      items: stations.map((station) {
-                        return DropdownMenuItem<String>(value: station['_id'] as String, child: Text(station['name'] as String));
-                      }).toList(),
-                      onChanged: (value) => selectedStation.value = value,
+        return Obx(
+          () => DraggableScrollableSheet(
+            expand: false,
+            initialChildSize: isKeyboardVisible.value ? 0.9 : 0.9,
+            maxChildSize: isKeyboardVisible.value ? 0.9 : 0.9,
+            minChildSize: 0.4,
+            builder: (_, scrollController) => SingleChildScrollView(
+              controller: scrollController,
+              child: Padding(
+                padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 20.0, bottom: MediaQuery.of(context).viewInsets.bottom + 20.0),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 60,
+                      height: 5,
+                      decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextBoxWidget(controller: platformController, hintText: "Platform Number"),
-                  const SizedBox(height: 16),
-                  TextBoxWidget(controller: coachNoController, hintText: "Coach Number (Optional)"),
-                  const SizedBox(height: 16),
-                  TextBoxWidget(controller: descriptionController, hintText: "Description"),
-                  const SizedBox(height: 16),
-                  TextBoxWidget(controller: destinationController, hintText: "Drop Point"),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Constants.instance.primary,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      onPressed: () {
-                        bookCoolie();
-                        Get.back();
-                        platformController.clear();
-                        coachNoController.clear();
-                        descriptionController.clear();
-                        destinationController.clear();
-                      },
-                      child: Text(
-                        "Book Now",
-                        style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+                    const SizedBox(height: 10),
+                    Text("Book Coolie", style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 10),
+                    Obx(
+                      () => Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.2), spreadRadius: 1, blurRadius: 4, offset: const Offset(0, 2))],
+                        ),
+                        child: DropdownMenu<String>(
+                          width: MediaQuery.of(context).size.width - 40, // Match width with padding
+                          initialSelection: selectedStation.value,
+                          requestFocusOnTap: true,
+                          dropdownMenuEntries: stations.map<DropdownMenuEntry<String>>((station) {
+                            return DropdownMenuEntry<String>(
+                              value: station['_id'] as String,
+                              label: station['name'] as String,
+                              style: MenuItemButton.styleFrom(textStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.black87)),
+                            );
+                          }).toList(),
+                          inputDecorationTheme: InputDecorationTheme(
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Constants.instance.primary, width: 1.5),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Constants.instance.primary.withOpacity(0.5), width: 1.5),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Constants.instance.primary, width: 2),
+                            ),
+                            labelStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.black54, fontWeight: FontWeight.w500),
+                            hintStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.grey),
+                          ),
+                          label: Text('Select Station', style: GoogleFonts.poppins(fontSize: 14, color: Colors.black54)),
+                          hintText: 'Choose a station',
+                          onSelected: (String? value) {
+                            selectedStation.value = value;
+                          },
+                          menuStyle: MenuStyle(
+                            backgroundColor: WidgetStateProperty.all(Colors.white),
+                            elevation: WidgetStateProperty.all(4),
+                            shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    TextBoxWidget(
+                      controller: platformController,
+                      hintText: "Platform Number",
+                      labelText: "Platform Number",
+                      maxLength: 2,
+                      keyboardType: TextInputType.number,
+                      focusNode: focusNode,
+                    ),
+                    const SizedBox(height: 10),
+                    TextBoxWidget(controller: coachNoController, hintText: "Coach Number (Optional)", labelText: "Coach Number (Optional)"),
+                    const SizedBox(height: 10),
+                    TextBoxWidget(controller: descriptionController, hintText: "Description", labelText: "Description"),
+                    const SizedBox(height: 10),
+                    TextBoxWidget(controller: destinationController, hintText: "Drop Point", labelText: "Drop Point"),
+                    const SizedBox(height: 16),
+
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Constants.instance.primary,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        onPressed: () {
+                          bookCoolie();
+                          Get.back();
+                          platformController.clear();
+                          coachNoController.clear();
+                          descriptionController.clear();
+                          destinationController.clear();
+                        },
+                        child: Text(
+                          "Book Now",
+                          style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -299,6 +352,61 @@ class TravelHomeController extends GetxController {
     } catch (e) {
       log("Error fetching profile: $e");
       AppToasting.showError('Failed to load profile: $e');
+    }
+  }
+
+  Future<void> cancelBooking(String bookingId) async {
+    try {
+      isLoading.value = true;
+
+      // Show loading dialog
+      Get.dialog(
+        Center(
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text("Canceling booking...", style: GoogleFonts.poppins(fontSize: 14)),
+              ],
+            ),
+          ),
+        ),
+        barrierDismissible: false,
+      );
+
+      final response = await travelHomeService.cancelBooking(bookingId);
+
+      // Close loading dialog
+      Get.back();
+
+      if (response != null) {
+        AppToasting.showSuccess('Booking canceled successfully');
+
+        // Refresh current booking
+        currentBooking.value = null;
+        await fetchCurrentBooking();
+
+        // Refresh booking history
+        bookingHistory.clear();
+        page.value = 1;
+        hasMore.value = true;
+        await fetchBookingHistory();
+      }
+    } catch (e) {
+      // Close loading dialog if still open
+      if (Get.isDialogOpen ?? false) {
+        Get.back();
+      }
+
+      log("ERROR in Cancel Booking: $e");
+      AppToasting.showError('Failed to cancel booking: $e');
+    } finally {
+      isLoading.value = false;
+      update();
     }
   }
 

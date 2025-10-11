@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:coolie_passanger/services/app_toasting.dart';
 import 'package:coolie_passanger/services/helper.dart';
 
 import '/services/app_storage.dart';
@@ -85,10 +86,21 @@ class TravelHomeScreen extends StatelessWidget {
               ),
             ),
             floatingActionButton: FloatingActionButton.extended(
-              onPressed: () => controller.showBookCoolieBottomSheet(context),
+              onPressed: () {
+                if (controller.currentBooking.value != null && controller.currentBooking.value?.status == "pending" ||
+                    controller.currentBooking.value?.status == "accepted") {
+                  AppToasting.showWarning("You have already booked coolie");
+                } else {
+                  controller.showBookCoolieBottomSheet(context);
+                }
+              },
               icon: const Icon(Icons.add_circle_outline, size: 24),
               label: Text("Book Coolie", style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600)),
-              backgroundColor: Constants.instance.primary,
+              backgroundColor:
+                  controller.currentBooking.value != null && controller.currentBooking.value?.status == "pending" ||
+                      controller.currentBooking.value?.status == "accepted"
+                  ? Constants.instance.greyShade500
+                  : Constants.instance.primary,
               foregroundColor: Colors.white,
               elevation: 6,
             ),
@@ -156,17 +168,19 @@ class TravelHomeScreen extends StatelessWidget {
         );
       }
 
+      final isPending = booking.status.toLowerCase() == 'pending';
+
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Constants.instance.primary, Constants.instance.primary.withOpacity(0.8)],
+              colors: [Constants.instance.white, Constants.instance.white.withOpacity(0.8)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(20),
-            boxShadow: [BoxShadow(color: Constants.instance.primary.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))],
+            boxShadow: [BoxShadow(color: Constants.instance.grey100.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))],
           ),
           child: Column(
             children: [
@@ -208,13 +222,14 @@ class TravelHomeScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 25),
                     _buildInfoRow(Icons.qr_code_2, "Booking ID", booking.bookingId),
-                    const Divider(height: 24),
+                    const SizedBox(height: 20),
                     _buildInfoRow(Icons.pin, "OTP", booking.otp.toString(), isHighlight: true),
                   ],
                 ),
               ),
+              Divider(height: 10),
               Container(
                 padding: const EdgeInsets.all(20),
                 child: Column(
@@ -231,7 +246,7 @@ class TravelHomeScreen extends StatelessWidget {
                     const SizedBox(height: 20),
                     Container(
                       padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(12)),
+                      decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(12)),
                       child: Row(
                         children: [
                           const CircleAvatar(
@@ -244,17 +259,17 @@ class TravelHomeScreen extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text("Assigned Coolie", style: GoogleFonts.poppins(fontSize: 12, color: Colors.white70)),
+                                Text("Assigned Coolie", style: GoogleFonts.poppins(fontSize: 12, color: Constants.instance.black)),
                                 const SizedBox(height: 4),
                                 Text(
                                   booking.assignedCollie ?? booking.collie!.name,
-                                  style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+                                  style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: Constants.instance.black),
                                 ),
                                 if (booking.collie!.mobileNo.isNotEmpty) ...[
                                   const SizedBox(height: 4),
                                   Text(
                                     booking.collie!.mobileNo,
-                                    style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white),
+                                    style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: Constants.instance.black),
                                   ),
                                 ],
                               ],
@@ -275,6 +290,41 @@ class TravelHomeScreen extends StatelessWidget {
                         ],
                       ),
                     ),
+
+                    if (isPending) ...[
+                      const SizedBox(height: 16),
+                      Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(colors: [Colors.red, Color(0xFFE53935)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [BoxShadow(color: Colors.red.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () {
+                              _showCancelBookingDialog(controller, booking.bookingId);
+                            },
+                            borderRadius: BorderRadius.circular(12),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.cancel_outlined, color: Colors.white, size: 20),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    "Cancel Booking",
+                                    style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 0.5),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -285,19 +335,93 @@ class TravelHomeScreen extends StatelessWidget {
     });
   }
 
+  void _showCancelBookingDialog(TravelHomeController controller, String bookingId) {
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: Colors.red.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+              child: const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 24),
+            ),
+            const SizedBox(width: 12),
+            Text("Cancel Booking", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 18)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Are you sure you want to cancel this booking?", style: GoogleFonts.poppins(fontSize: 15, color: Colors.grey[700])),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline, color: Colors.orange, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text("This action cannot be undone", style: GoogleFonts.poppins(fontSize: 12, color: Colors.orange[800])),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text(
+              "No, Keep It",
+              style: GoogleFonts.poppins(color: Colors.grey[700], fontWeight: FontWeight.w600),
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(colors: [Colors.red, Color(0xFFE53935)]),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: ElevatedButton(
+              onPressed: () {
+                Get.back();
+                controller.cancelBooking(bookingId);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text(
+                "Yes, Cancel",
+                style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildInfoRow(IconData icon, String label, String value, {bool isHighlight = false}) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: Colors.grey[600]),
+        Icon(icon, size: 20, color: Constants.instance.primary),
         const SizedBox(width: 12),
-        Text("$label: ", style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[600])),
+        Text("$label: ", style: GoogleFonts.poppins(fontSize: 14, color: Constants.instance.black)),
         Expanded(
           child: Text(
             value,
             style: GoogleFonts.poppins(
               fontSize: isHighlight ? 18 : 14,
               fontWeight: isHighlight ? FontWeight.bold : FontWeight.w600,
-              color: isHighlight ? Constants.instance.primary : Colors.grey[800],
+              color: isHighlight ? Constants.instance.primary : Constants.instance.black,
             ),
             textAlign: TextAlign.end,
           ),
@@ -310,17 +434,17 @@ class TravelHomeScreen extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: Colors.white),
+        Icon(icon, size: 20, color: Constants.instance.primary),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: GoogleFonts.poppins(fontSize: 12, color: Colors.white70)),
+              Text(label, style: GoogleFonts.poppins(fontSize: 14, color: Constants.instance.black)),
               const SizedBox(height: 4),
               Text(
                 value,
-                style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
+                style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: Constants.instance.black),
               ),
             ],
           ),
