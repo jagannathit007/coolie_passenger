@@ -359,7 +359,6 @@ class TravelHomeController extends GetxController {
     try {
       isLoading.value = true;
 
-      // Show loading dialog
       Get.dialog(
         Center(
           child: Container(
@@ -369,8 +368,7 @@ class TravelHomeController extends GetxController {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const CircularProgressIndicator(),
-                const SizedBox(height: 16),
-                Text("Canceling booking...", style: GoogleFonts.poppins(fontSize: 14)),
+               
               ],
             ),
           ),
@@ -380,24 +378,20 @@ class TravelHomeController extends GetxController {
 
       final response = await travelHomeService.cancelBooking(bookingId);
 
-      // Close loading dialog
       Get.back();
 
       if (response != null) {
         AppToasting.showSuccess('Booking canceled successfully');
 
-        // Refresh current booking
         currentBooking.value = null;
         await fetchCurrentBooking();
 
-        // Refresh booking history
         bookingHistory.clear();
         page.value = 1;
         hasMore.value = true;
         await fetchBookingHistory();
       }
     } catch (e) {
-      // Close loading dialog if still open
       if (Get.isDialogOpen ?? false) {
         Get.back();
       }
