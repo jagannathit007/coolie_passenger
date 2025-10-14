@@ -46,7 +46,7 @@ class TravelHomeController extends GetxController {
     // _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
     passengerId.value = AppStorage.read('passengerID') ?? '';
     log("Passenger ID: ${passengerId.value}");
-    _fetchInitialData();
+    fetchInitialData();
     scrollController.addListener(() {
       if (scrollController.position.pixels == scrollController.position.maxScrollExtent && hasMore.value) {
         fetchBookingHistory();
@@ -70,7 +70,7 @@ class TravelHomeController extends GetxController {
     }
   }
 
-  Future<void> _fetchInitialData() async {
+  Future<void> fetchInitialData() async {
     isLoading.value = true;
 
     try {
@@ -86,7 +86,7 @@ class TravelHomeController extends GetxController {
       await fetchBookingHistory();
     } catch (e) {
       log("Error in initial data fetch: $e");
-      AppToasting.showError('Failed to load initial data: $e');
+      // AppToasting.showError('Failed to load initial data: $e');
     } finally {
       isLoading.value = false;
     }
@@ -103,7 +103,7 @@ class TravelHomeController extends GetxController {
       }
     } catch (e) {
       log("Error fetching stations: $e");
-      AppToasting.showError('Failed to load stations: $e');
+      // AppToasting.showError('Failed to load stations: $e');
     }
   }
 
@@ -120,7 +120,7 @@ class TravelHomeController extends GetxController {
       }
     } catch (e) {
       log("Error fetching booking status: $e");
-      AppToasting.showError('Failed to load booking status: $e');
+      // AppToasting.showError('Failed to load booking status: $e');
     }
   }
 
@@ -146,7 +146,7 @@ class TravelHomeController extends GetxController {
       }
     } catch (e) {
       log("Error fetching booking history: $e");
-      AppToasting.showError('Failed to load booking history: $e');
+      // AppToasting.showError('Failed to load booking history: $e');
       hasMore.value = false;
     } finally {
       isLoading.value = false;
@@ -337,7 +337,7 @@ class TravelHomeController extends GetxController {
       }
     } catch (e) {
       log("ERROR in Book Coolie: $e");
-      AppToasting.showError('Failed to book coolie: $e');
+      // AppToasting.showError('Failed to book coolie: $e');
     } finally {
       isLoading.value = false;
     }
@@ -351,7 +351,7 @@ class TravelHomeController extends GetxController {
       log("User Profile: ${userProfile.value.toJson()}");
     } catch (e) {
       log("Error fetching profile: $e");
-      AppToasting.showError('Failed to load profile: $e');
+      // AppToasting.showError('Failed to load profile: $e');
     }
   }
 
@@ -397,7 +397,7 @@ class TravelHomeController extends GetxController {
       }
 
       log("ERROR in Cancel Booking: $e");
-      AppToasting.showError('Failed to cancel booking: $e');
+      // AppToasting.showError('Failed to cancel booking: $e');
     } finally {
       isLoading.value = false;
       update();

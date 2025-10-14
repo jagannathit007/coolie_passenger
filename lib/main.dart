@@ -20,7 +20,9 @@ void main() async {
   await GetStorage.init();
   WidgetsFlutterBinding.ensureInitialized();
   if (Firebase.apps.isEmpty) {
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
   } else {
     Firebase.app();
   }
@@ -36,7 +38,9 @@ void main() async {
   FirebaseMessaging.onMessageOpenedApp.listen(_onMessageOpenedApp);
 
   await terminatedNotification();
-  await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(kReleaseMode);
+  await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
+    kReleaseMode,
+  );
 
   FlutterError.onError = (errorDetails) {
     if (kReleaseMode) {
@@ -59,7 +63,9 @@ String? lastHandledMessageId;
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await GetStorage.init();
   if (Firebase.apps.isEmpty) {
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
   }
 
   if (message.messageId != null && message.messageId != lastHandledMessageId) {
@@ -85,8 +91,10 @@ void _onMessageOpenedApp(RemoteMessage message) {
 }
 
 Future<void> terminatedNotification() async {
-  RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
-  if (initialMessage != null && initialMessage.messageId != lastHandledMessageId) {
+  RemoteMessage? initialMessage = await FirebaseMessaging.instance
+      .getInitialMessage();
+  if (initialMessage != null &&
+      initialMessage.messageId != lastHandledMessageId) {
     lastHandledMessageId = initialMessage.messageId;
     notificationService.showRemoteNotificationAndroid(initialMessage);
     _handleNotificationClick(initialMessage);
@@ -99,15 +107,15 @@ void _handleNotificationClick(RemoteMessage message) async {
 
   if (bookingId != null) {
     log("Handling notification with bookingId: $bookingId");
-
     // Wait a bit for the app to initialize
     await Future.delayed(const Duration(milliseconds: 500));
 
     if (Get.isRegistered<TravelHomeController>()) {
-      TravelHomeController().onInit();
+      log("HomeController found, navigating to Home and refreshing data");
+      final homeCtrl = Get.find<TravelHomeController>();
+      homeCtrl.fetchInitialData();
     } else {
       log("HomeController not registered, navigating to Home with bookingId");
-      // Get.toNamed(RouteName.travelHomeScreen);
       Get.toNamed(RouteName.travelHomeScreen);
     }
   }

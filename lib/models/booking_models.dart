@@ -22,7 +22,7 @@ class Booking {
   final PickupDetails pickupDetails;
   final Timestamp timestamp;
   final Fare fare;
-  final String? id;
+  final String id;
   final String? passengerId;
   final String? collieId;
   final int otp;
@@ -42,7 +42,7 @@ class Booking {
     required this.pickupDetails,
     required this.timestamp,
     required this.fare,
-    this.id,
+    required this.id,
     this.passengerId,
     this.collieId,
     required this.otp,
@@ -66,7 +66,7 @@ class Booking {
       pickupDetails: PickupDetails.fromJson(json['pickupDetails'] ?? {}),
       timestamp: Timestamp.fromJson(json['timestamp'] ?? {}),
       fare: Fare.fromJson(json['fare'] ?? {}),
-      id: json['_id'],
+      id: json['_id'] ?? json["id"] ?? '',
       passengerId: json['passengerId'],
       collieId: json['collieId'],
       otp: int.tryParse(json['otp'].toString()) ?? 0,
@@ -90,7 +90,7 @@ class Booking {
     'pickupDetails': pickupDetails.toJson(),
     'timestamp': timestamp.toJson(),
     'fare': fare.toJson(),
-    if (id != null) '_id': id,
+    '_id': id,
     if (passengerId != null) 'passengerId': passengerId,
     if (collieId != null) 'collieId': collieId,
     'otp': otp,

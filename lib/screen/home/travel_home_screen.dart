@@ -302,7 +302,7 @@ class TravelHomeScreen extends StatelessWidget {
                           color: Colors.transparent,
                           child: InkWell(
                             onTap: () {
-                              _showCancelBookingDialog(controller, booking.bookingId);
+                              _showCancelBookingDialog(controller, booking.id);
                             },
                             borderRadius: BorderRadius.circular(12),
                             child: Padding(

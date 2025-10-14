@@ -41,7 +41,7 @@ class AuthService extends GetxService {
     try {
       final result = await apiManager.post(
         NetworkConstants.signUp,
-        data: {"name": name, "mobileNo": mobileNo, "emailId": email ?? "", "latitude": latitude, "longitude": longitude, "addressComponent": addressComponent},
+        data: {"name": name, "mobileNo": mobileNo, "emailId": email ?? "", "latitude": latitude, "longitude": longitude, "addressComponent": addressComponent, "deviceType": "Other"},
       );
 
       if (result.status == 200 && result.data != null) {
