@@ -92,4 +92,19 @@ class TravelHomeService extends GetxService {
       return [];
     }
   }
+
+  Future<List<String>> getAllPlatforms(String stationId) async {
+    try {
+      final response = await apiManager.get('${NetworkConstants.getPlatforms}/$stationId');
+      if (response.status != 200 || response.data == null) {
+        AppToasting.showWarning('Failed to fetch platforms');
+        return ['1', '2', '3', '4', '5', '6'];
+      }
+      return List<String>.from(response.data['platforms'] ?? ['1', '2', '3', '4', '5', '6']);
+    } catch (err) {
+      log("Error fetching platforms: $err");
+      AppToasting.showError('Error fetching platforms: $err');
+      return ['1', '2', '3', '4', '5', '6'];
+    }
+  }
 }

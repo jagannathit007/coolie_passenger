@@ -1,5 +1,7 @@
 import 'dart:developer';
 
+import 'package:flutter/services.dart';
+
 import '../../widgets/text_box_widegt.dart';
 import '/screen/home/travel_home_service.dart';
 import '/screen/user%20profile/profile_service.dart';
@@ -26,7 +28,11 @@ class TravelHomeController extends GetxController {
   final descriptionController = TextEditingController();
   final destinationController = TextEditingController();
   final selectedStation = Rxn<String>();
+    final selectedPlatform = Rxn<String>();
+  final selectedDropPoint = Rxn<String>();
   final stations = <dynamic>[].obs;
+  final platforms = <String>['1', '2', '3', '4', '5', '6'].obs;
+  final dropPoints = <String>['1', '2', '3', '4', '5', '6', 'Exit'].obs;
   final currentBooking = Rxn<Booking>();
   final bookingHistory = <Booking>[].obs;
   final page = 1.obs;
@@ -107,8 +113,24 @@ class TravelHomeController extends GetxController {
     }
   }
 
-  Future<void> fetchCurrentBooking() async {
+  Future<void> fetchPlatforms(String stationId) async {
     try {
+      final response = await travelHomeService.getAllPlatforms(stationId);
+      platforms.value = response;
+      dropPoints.value = response.map((platform) => 'Platform $platform').toList()..add('Exit');
+      log("Platforms fetched: ${platforms.length}");
+    } catch (e) {
+      log("Error fetching platforms: $e");
+      platforms.value = ['1', '2', '3', '4', '5', '6'];
+      dropPoints.value = ['Platform 1', 'Platform 2', 'Platform 3', 'Platform 4', 'Platform 5', 'Platform 6', 'Exit'];
+    }
+  }
+
+  Future<void> fetchCurrentBooking() async {
+    isLoading.value = true;
+
+    try {
+
       final response = await travelHomeService.getBookingStatus(passengerId: passengerId.value);
       log("Booking Status Response: $response");
       if (response != null && response is Map<String, dynamic>) {
@@ -121,6 +143,8 @@ class TravelHomeController extends GetxController {
     } catch (e) {
       log("Error fetching booking status: $e");
       // AppToasting.showError('Failed to load booking status: $e');
+    } finally {
+      isLoading.value = false;
     }
   }
 
@@ -218,9 +242,11 @@ class TravelHomeController extends GetxController {
                           boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.2), spreadRadius: 1, blurRadius: 4, offset: const Offset(0, 2))],
                         ),
                         child: DropdownMenu<String>(
-                          width: MediaQuery.of(context).size.width - 40, // Match width with padding
+                          width: MediaQuery.of(context).size.width - 40,
                           initialSelection: selectedStation.value,
-                          requestFocusOnTap: true,
+                          requestFocusOnTap: false,
+                          enableFilter: false,
+                          enableSearch: false,
                           dropdownMenuEntries: stations.map<DropdownMenuEntry<String>>((station) {
                             return DropdownMenuEntry<String>(
                               value: station['_id'] as String,
@@ -261,22 +287,127 @@ class TravelHomeController extends GetxController {
                       ),
                     ),
                     const SizedBox(height: 16),
+                    Obx(
+                      () => Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.2), spreadRadius: 1, blurRadius: 4, offset: const Offset(0, 2))],
+                        ),
+                        child: DropdownMenu<String>(
+                          width: MediaQuery.of(context).size.width - 40,
+                          initialSelection: selectedPlatform.value,
+                          requestFocusOnTap: false,
+                          enableFilter: false,
+                          enableSearch: false,
+                          dropdownMenuEntries: platforms.map<DropdownMenuEntry<String>>((platform) {
+                            return DropdownMenuEntry<String>(
+                              value: platform,
+                              label: platform,
+                              style: MenuItemButton.styleFrom(textStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.black87)),
+                            );
+                          }).toList(),
+                          inputDecorationTheme: InputDecorationTheme(
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Constants.instance.primary, width: 1.5),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Constants.instance.primary.withOpacity(0.5), width: 1.5),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Constants.instance.primary, width: 2),
+                            ),
+                            labelStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.black54, fontWeight: FontWeight.w500),
+                            hintStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.grey),
+                          ),
+                          label: Text('Pickup Platform Number', style: GoogleFonts.poppins(fontSize: 14, color: Colors.black54)),
+                          hintText: 'Choose a platform',
+                          onSelected: (String? value) {
+                            selectedPlatform.value = value;
+                          },
+                          menuStyle: MenuStyle(
+                            backgroundColor: WidgetStateProperty.all(Colors.white),
+                            elevation: WidgetStateProperty.all(4),
+                            shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     TextBoxWidget(
-                      controller: platformController,
-                      hintText: "Platform Number",
-                      labelText: "Platform Number",
-                      maxLength: 2,
-                      keyboardType: TextInputType.number,
-                      focusNode: focusNode,
+                      controller: coachNoController,
+                      hintText: "Coach Number (Optional)",
+                      labelText: "Coach Number (Optional)",
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[A-Z0-9]')),
+                      ],
                     ),
                     const SizedBox(height: 10),
-                    TextBoxWidget(controller: coachNoController, hintText: "Coach Number (Optional)", labelText: "Coach Number (Optional)"),
+                    TextBoxWidget(
+                      controller: descriptionController,
+                      hintText: "Message",
+                      labelText: "Message",
+                    ),
                     const SizedBox(height: 10),
-                    TextBoxWidget(controller: descriptionController, hintText: "Description", labelText: "Description"),
-                    const SizedBox(height: 10),
-                    TextBoxWidget(controller: destinationController, hintText: "Drop Point", labelText: "Drop Point"),
+                    Obx(
+                      () => Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.2), spreadRadius: 1, blurRadius: 4, offset: const Offset(0, 2))],
+                        ),
+                        child: DropdownMenu<String>(
+                          width: MediaQuery.of(context).size.width - 40,
+                          initialSelection: selectedDropPoint.value,
+                          requestFocusOnTap: false,
+                          enableFilter: false,
+                          enableSearch: false,
+                          dropdownMenuEntries: dropPoints.map<DropdownMenuEntry<String>>((point) {
+                            return DropdownMenuEntry<String>(
+                              value: point,
+                              label: point,
+                              style: MenuItemButton.styleFrom(textStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.black87)),
+                            );
+                          }).toList(),
+                          inputDecorationTheme: InputDecorationTheme(
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Constants.instance.primary, width: 1.5),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Constants.instance.primary.withOpacity(0.5), width: 1.5),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Constants.instance.primary, width: 2),
+                            ),
+                            labelStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.black54, fontWeight: FontWeight.w500),
+                            hintStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.grey),
+                          ),
+                          label: Text('Drop Point', style: GoogleFonts.poppins(fontSize: 14, color: Colors.black54)),
+                          hintText: 'Choose a drop point',
+                          onSelected: (String? value) {
+                            selectedDropPoint.value = value;
+                          },
+                          menuStyle: MenuStyle(
+                            backgroundColor: WidgetStateProperty.all(Colors.white),
+                            elevation: WidgetStateProperty.all(4),
+                            shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                          ),
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 16),
-
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -285,13 +416,16 @@ class TravelHomeController extends GetxController {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
-                        onPressed: () {
-                          bookCoolie();
+                        onPressed: () async{
                           Get.back();
+                          await bookCoolie();
                           platformController.clear();
                           coachNoController.clear();
                           descriptionController.clear();
                           destinationController.clear();
+                          selectedStation.value = null;
+                          selectedPlatform.value = null;
+                          selectedDropPoint.value = null;
                         },
                         child: Text(
                           "Book Now",
@@ -310,20 +444,20 @@ class TravelHomeController extends GetxController {
   }
 
   Future<void> bookCoolie() async {
-    if (selectedStation.value == null || platformController.text.trim().isEmpty) {
-      AppToasting.showWarning("Please select a station and enter platform number");
+    isLoading.value = true;
+    if (selectedStation.value == null || selectedPlatform.value == null || selectedDropPoint.value == null) {
+      AppToasting.showWarning("Please select a station, platform number, and drop point");
       return;
     }
-    isLoading.value = true;
 
     try {
       final request = {
         "passengerId": passengerId.value,
         "stationId": selectedStation.value,
-        "station": platformController.text.trim(),
+        "station": selectedPlatform.value,
         "coachNumber": coachNoController.text.trim(),
         "description": descriptionController.text.trim(),
-        "destination": destinationController.text.trim(),
+        "destination": selectedDropPoint.value,
       };
       final result = await travelHomeService.bookCoolie(request);
       if (result != null) {
@@ -344,6 +478,8 @@ class TravelHomeController extends GetxController {
   }
 
   Future<void> getAPICalling() async {
+    isLoading.value = true;
+
     try {
       final response = await profileService.myProfile();
       log("Profile Response: $response");
@@ -352,29 +488,14 @@ class TravelHomeController extends GetxController {
     } catch (e) {
       log("Error fetching profile: $e");
       // AppToasting.showError('Failed to load profile: $e');
+    } finally {
+    isLoading.value = false;
     }
   }
 
   Future<void> cancelBooking(String bookingId) async {
     try {
       isLoading.value = true;
-
-      Get.dialog(
-        Center(
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const CircularProgressIndicator(),
-               
-              ],
-            ),
-          ),
-        ),
-        barrierDismissible: false,
-      );
 
       final response = await travelHomeService.cancelBooking(bookingId);
 
@@ -392,12 +513,7 @@ class TravelHomeController extends GetxController {
         await fetchBookingHistory();
       }
     } catch (e) {
-      if (Get.isDialogOpen ?? false) {
-        Get.back();
-      }
-
       log("ERROR in Cancel Booking: $e");
-      // AppToasting.showError('Failed to cancel booking: $e');
     } finally {
       isLoading.value = false;
       update();

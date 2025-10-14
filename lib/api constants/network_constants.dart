@@ -1,6 +1,6 @@
 class NetworkConstants {
   // local Urls
-  static const String baseUrl = 'https://lsdd5gzv-2500.inc1.devtunnels.ms/';
+  static const String baseUrl = 'https://n1n658wz-2500.inc1.devtunnels.ms/';
   static const String imageURL = 'https://lsdd5gzv-2500.inc1.devtunnels.ms/';
 
   //Production Urls
@@ -23,6 +23,7 @@ class NetworkConstants {
   static const String getBookingHistory = 'api/users/getBookingHistory';
   static const String rateBooking = 'api/users/rateBooking';
   static const String getStations = 'api/admin/getAllStation';
+  static const String getPlatforms = 'api/admin/getPlatforms';
 
   // Timeouts
   static const int sendTimeout = 30000; // 30 seconds

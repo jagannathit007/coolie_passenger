@@ -67,7 +67,7 @@ class TravelHomeScreen extends StatelessWidget {
                 await controller.fetchBookingHistory();
               },
               child: Obx(
-                () => controller.isLoading.value && controller.bookingHistory.isEmpty && controller.currentBooking.value == null
+                () => controller.isLoading.value || controller.bookingHistory.isEmpty && controller.currentBooking.value == null
                     ? const Center(child: CircularProgressIndicator())
                     : SingleChildScrollView(
                         physics: const AlwaysScrollableScrollPhysics(),
@@ -257,18 +257,21 @@ class TravelHomeScreen extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                if (booking.collie!.mobileNo.isNotEmpty) ...[
                                 Text("Assigned Coolie", style: GoogleFonts.poppins(fontSize: 12, color: Constants.instance.black)),
                                 const SizedBox(height: 4),
                                 Text(
                                   booking.assignedCollie ?? booking.collie!.name,
                                   style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: Constants.instance.black),
                                 ),
-                                if (booking.collie!.mobileNo.isNotEmpty) ...[
                                   const SizedBox(height: 4),
                                   Text(
                                     booking.collie!.mobileNo,
                                     style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: Constants.instance.black),
                                   ),
+                                ] else...[
+                                Text("Your coolie is being assigned, please wait a moment.", style: GoogleFonts.poppins(fontSize: 12, color: Constants.instance.black)),
+
                                 ],
                               ],
                             ),
