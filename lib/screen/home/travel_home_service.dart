@@ -107,4 +107,131 @@ class TravelHomeService extends GetxService {
       return ['1', '2', '3', '4', '5', '6'];
     }
   }
+  // Future<List<Platform>> getAllPlatforms(String stationId) async {
+  //   try {
+  //     final response = await apiManager.get('${NetworkConstants.getPlatforms}/$stationId');
+  //     if (response.status != 200 || response.data == null || response.data['platforms'] == null) {
+  //       AppToasting.showWarning('Failed to fetch platforms');
+  //       return [
+  //         Platform(
+  //           id: 'default1',
+  //           stationId: stationId,
+  //           platformNumber: '1',
+  //           isActive: true,
+  //           isDeleted: false,
+  //           createdAt: DateTime.now(),
+  //           updatedAt: DateTime.now(),
+  //         ),
+  //         Platform(
+  //           id: 'default2',
+  //           stationId: stationId,
+  //           platformNumber: '2',
+  //           isActive: true,
+  //           isDeleted: false,
+  //           createdAt: DateTime.now(),
+  //           updatedAt: DateTime.now(),
+  //         ),
+  //         Platform(
+  //           id: 'default3',
+  //           stationId: stationId,
+  //           platformNumber: '3',
+  //           isActive: true,
+  //           isDeleted: false,
+  //           createdAt: DateTime.now(),
+  //           updatedAt: DateTime.now(),
+  //         ),
+  //         Platform(
+  //           id: 'default4',
+  //           stationId: stationId,
+  //           platformNumber: '4',
+  //           isActive: true,
+  //           isDeleted: false,
+  //           createdAt: DateTime.now(),
+  //           updatedAt: DateTime.now(),
+  //         ),
+  //         Platform(
+  //           id: 'default5',
+  //           stationId: stationId,
+  //           platformNumber: '5',
+  //           isActive: true,
+  //           isDeleted: false,
+  //           createdAt: DateTime.now(),
+  //           updatedAt: DateTime.now(),
+  //         ),
+  //         Platform(
+  //           id: 'default6',
+  //           stationId: stationId,
+  //           platformNumber: '6',
+  //           isActive: true,
+  //           isDeleted: false,
+  //           createdAt: DateTime.now(),
+  //           updatedAt: DateTime.now(),
+  //         ),
+  //       ];
+  //     }
+  //     return (response.data['platforms'] as List<dynamic>)
+  //         .map((platform) => Platform.fromJson(platform))
+  //         .toList();
+  //   } catch (err) {
+  //     log("Error fetching platforms: $err");
+  //     AppToasting.showError('Error fetching platforms: $err');
+  //     return [
+  //       Platform(
+  //         id: 'default1',
+  //         stationId: stationId,
+  //         platformNumber: '1',
+  //         isActive: true,
+  //         isDeleted: false,
+  //         createdAt: DateTime.now(),
+  //         updatedAt: DateTime.now(),
+  //       ),
+  //       Platform(
+  //         id: 'default2',
+  //         stationId: stationId,
+  //         platformNumber: '2',
+  //         isActive: true,
+  //         isDeleted: false,
+  //         createdAt: DateTime.now(),
+  //         updatedAt: DateTime.now(),
+  //       ),
+  //       Platform(
+  //         id: 'default3',
+  //         stationId: stationId,
+  //         platformNumber: '3',
+  //         isActive: true,
+  //         isDeleted: false,
+  //         createdAt: DateTime.now(),
+  //         updatedAt: DateTime.now(),
+  //       ),
+  //       Platform(
+  //         id: 'default4',
+  //         stationId: stationId,
+  //         platformNumber: '4',
+  //         isActive: true,
+  //         isDeleted: false,
+  //         createdAt: DateTime.now(),
+  //         updatedAt: DateTime.now(),
+  //       ),
+  //       Platform(
+  //         id: 'default5',
+  //         stationId: stationId,
+  //         platformNumber: '5',
+  //         isActive: true,
+  //         isDeleted: false,
+  //         createdAt: DateTime.now(),
+  //         updatedAt: DateTime.now(),
+  //       ),
+  //       Platform(
+  //         id: 'default6',
+  //         stationId: stationId,
+  //         platformNumber: '6',
+  //         isActive: true,
+  //         isDeleted: false,
+  //         createdAt: DateTime.now(),
+  //         updatedAt: DateTime.now(),
+  //       ),
+  //     ];
+  //   }
+  // }
+  // }
 }

@@ -31,8 +31,8 @@ class TravelHomeController extends GetxController {
     final selectedPlatform = Rxn<String>();
   final selectedDropPoint = Rxn<String>();
   final stations = <dynamic>[].obs;
-  final platforms = <String>['1', '2', '3', '4', '5', '6'].obs;
-  final dropPoints = <String>['1', '2', '3', '4', '5', '6', 'Exit'].obs;
+  final platforms = <String>['1', '2', '3', '4', '5', '6', '7', '8'].obs;
+  final dropPoints = <String>['1', '2', '3', '4', '5', '6', '7', '8', 'Exit'].obs;
   final currentBooking = Rxn<Booking>();
   final bookingHistory = <Booking>[].obs;
   final page = 1.obs;
@@ -121,8 +121,8 @@ class TravelHomeController extends GetxController {
       log("Platforms fetched: ${platforms.length}");
     } catch (e) {
       log("Error fetching platforms: $e");
-      platforms.value = ['1', '2', '3', '4', '5', '6'];
-      dropPoints.value = ['Platform 1', 'Platform 2', 'Platform 3', 'Platform 4', 'Platform 5', 'Platform 6', 'Exit'];
+      platforms.value = ['1', '2', '3', '4', '5', '6', '7', '8'];
+      dropPoints.value = ['1', '2', '3', '4', '5', '6', '7', '8', 'Exit'];
     }
   }
 

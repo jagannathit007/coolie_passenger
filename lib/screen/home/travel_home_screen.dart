@@ -67,7 +67,7 @@ class TravelHomeScreen extends StatelessWidget {
                 await controller.fetchBookingHistory();
               },
               child: Obx(
-                () => controller.isLoading.value || controller.bookingHistory.isEmpty && controller.currentBooking.value == null
+                () => controller.isLoading.value
                     ? const Center(child: CircularProgressIndicator())
                     : SingleChildScrollView(
                         physics: const AlwaysScrollableScrollPhysics(),
@@ -391,7 +391,6 @@ class TravelHomeScreen extends StatelessWidget {
             ),
             child: ElevatedButton(
               onPressed: () {
-                Get.back();
                 controller.cancelBooking(bookingId);
               },
               style: ElevatedButton.styleFrom(
