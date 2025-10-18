@@ -43,7 +43,17 @@ class OtpVerification extends StatelessWidget {
                             color: Colors.white,
                             boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 24, offset: const Offset(0, 10))],
                           ),
-                          child: Image.asset("assets/logo.png", height: 70, width: 70),
+                          child: CircleAvatar(
+                            radius: 40,
+                            backgroundColor: Colors.transparent,
+                            child: ClipOval(
+                              child: Image.asset(
+                                "assets/logo.png",
+                                height: 70,
+                                width: 70,
+                              ),
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 16),
                         Text(
