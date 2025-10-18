@@ -20,9 +20,7 @@ void main() async {
   await GetStorage.init();
   WidgetsFlutterBinding.ensureInitialized();
   if (Firebase.apps.isEmpty) {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   } else {
     Firebase.app();
   }
@@ -30,17 +28,12 @@ void main() async {
   await notificationService.init();
   await requestNotificationPermission();
 
-  final fcmToken = await FirebaseMessaging.instance.getToken();
-  log("FCM Token: $fcmToken");
-
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   FirebaseMessaging.onMessage.listen(_onForegroundMessage);
   FirebaseMessaging.onMessageOpenedApp.listen(_onMessageOpenedApp);
 
   await terminatedNotification();
-  await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
-    kReleaseMode,
-  );
+  await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(kReleaseMode);
 
   FlutterError.onError = (errorDetails) {
     if (kReleaseMode) {
@@ -63,9 +56,7 @@ String? lastHandledMessageId;
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await GetStorage.init();
   if (Firebase.apps.isEmpty) {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   }
 
   if (message.messageId != null && message.messageId != lastHandledMessageId) {
@@ -91,10 +82,8 @@ void _onMessageOpenedApp(RemoteMessage message) {
 }
 
 Future<void> terminatedNotification() async {
-  RemoteMessage? initialMessage = await FirebaseMessaging.instance
-      .getInitialMessage();
-  if (initialMessage != null &&
-      initialMessage.messageId != lastHandledMessageId) {
+  RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+  if (initialMessage != null && initialMessage.messageId != lastHandledMessageId) {
     lastHandledMessageId = initialMessage.messageId;
     notificationService.showRemoteNotificationAndroid(initialMessage);
     _handleNotificationClick(initialMessage);
