@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../models/get_user_profile_model.dart';
 import '../../routes/route_name.dart';
 import '../../services/app_storage.dart';
@@ -132,6 +133,42 @@ class ProfileController extends GetxController {
       Get.back();
     }
   }
+
+  Future<void> deleteAccount(BuildContext context) async {
+      const url = 'https://docs.google.com/forms/d/e/1FAIpQLSe_6UsyVHh5hX02k2N-uaAz26Kl9iTim2fTskkyppcthKmlDQ/viewform?pli=1';
+      // Show confirmation dialog
+      bool? confirmDelete = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Delete Account'),
+            content: const Text('Are you sure you want to delete your account? This action is permanent and cannot be undone.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false), // Cancel
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true), // Confirm
+                child: const Text('Delete', style: TextStyle(color: Colors.red)),
+              ),
+            ],
+          );
+        },
+      );
+      // Proceed with deletion only if user confirms
+      if (confirmDelete == true) {
+        try {
+          if (await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication)) {
+            // Success
+          } else {
+            AppToasting.showWarning('Could not launch URL');
+          }
+        } catch (e) {
+          AppToasting.showWarning('Error: $e');
+        }
+      }
+    }
 
   @override
   void onClose() {

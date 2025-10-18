@@ -120,6 +120,24 @@ class ProfileScreen extends StatelessWidget {
                                           ),
                                         ),
                                       ),
+                                      const SizedBox(height: 18),
+                                      SizedBox(
+                                        width: double.infinity,
+                                        child: ElevatedButton(
+                                          onPressed: () {
+                                            controller.deleteAccount(context);
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Constants.instance.primary,
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                            padding: const EdgeInsets.symmetric(vertical: 16),
+                                          ),
+                                          child: Text(
+                                            "Delete Account",
+                                            style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+                                          ),
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
