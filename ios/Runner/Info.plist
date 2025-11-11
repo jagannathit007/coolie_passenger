@@ -43,5 +43,19 @@
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 	</array>
+
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs camera access to take your profile photo.</string>
+
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs access to your photo library to select profile images.</string>
+
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app may require microphone access when recording video or audio.</string>
+
+	<!-- (Optional) If you also allow saving edited/cropped images -->
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>This app needs permission to save edited profile photos to your photo library.</string>
+
 </dict>
 </plist>
